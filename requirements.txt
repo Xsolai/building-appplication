@@ -11,4 +11,5 @@ passlib
 bcrypt
 requests
 pyhton-jose
+pyjwt
 jwt
