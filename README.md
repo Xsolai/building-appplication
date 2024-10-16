@@ -14,7 +14,7 @@ The **Fire Protection Review System** is a web-based application designed to fac
 The project has the following structure:
 
 ```
-Fire-protection-review-system/
+building-application/
 │
 ├── app/
 │   ├── authentication/     # User 
