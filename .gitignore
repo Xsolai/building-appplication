@@ -1,3 +1,5 @@
 testappenv/
 
 uploads/
+
+__pycache__/

@@ -6,4 +6,9 @@ pillow
 pymupdf
 python-dotenv
 openai
+sqlalchemy
+passlib
+bcrypt
 requests
+pyhton-jose
+jwt
