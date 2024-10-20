@@ -31,7 +31,7 @@ building-application/
 
 ### Prerequisites
 
-- Python 3.x
+- Python 3.11.0
 - SQLite (for database management)
 
 ### Installation
