@@ -11,6 +11,8 @@ from io import BytesIO
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+Image.MAX_IMAGE_PIXELS = None
+
 
 def encode_images_to_base64(images_path):
     image_files = [os.path.join(images_path, file) for file in os.listdir(images_path) if file.endswith(".png")]
