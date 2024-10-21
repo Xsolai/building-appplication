@@ -8,7 +8,7 @@ app = FastAPI(debug=True)
 models.Base.metadata.create_all(bind = engine)
 
 app.include_router(upload.router)
-app.include_router(login.router)
+# app.include_router(login.router)
 app.include_router(result.router)
 app.include_router(upload_B_plan.router)
 
