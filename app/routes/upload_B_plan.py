@@ -16,7 +16,7 @@ router = APIRouter(
 )
 
 @router.post('/upload-B-Plan/')
-async def upload_file(file: UploadFile = File(...),  db: Session = Depends(get_db)):
+async def upload_file(file: UploadFile = File(...),  db: Session = Depends(get_db),  current_user: schemas.User = Depends(oauth2.get_current_user)):
 
     try:
         file_path:str = os.path.join(CURRENT_DIR, f"B-plan")
