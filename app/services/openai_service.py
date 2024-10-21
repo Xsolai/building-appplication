@@ -137,6 +137,8 @@ def final_response(responses:list):
 - volume of the building
 - Technical Data (like Fire resistance classes (EI 90-M, EI 60-M, F90, F60, etc), following strandard heating system or not, etc..) must be in one line
 - Relevant authorities
+
+All these values must be in **German Language** except keys must be in **English**.
     """
     responses = " ".join([response for response in responses])
     payload = {
