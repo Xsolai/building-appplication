@@ -17,19 +17,22 @@ router = APIRouter(
 )
 
 @router.post('/upload/')
-async def upload_file(file: UploadFile = File(...),  db: Session = Depends(get_db),  current_user: schemas.User = Depends(oauth2.get_current_user)):
+async def upload_file(file: UploadFile = File(...),  db: Session = Depends(get_db)):
 
     try:
-        user = db.query(models.User).filter(models.User.email == current_user.email).first()
+        # user = db.query(models.User).filter(models.User.email == current_user.email).first()
         file_path:str = os.path.join(CURRENT_DIR, f"zip")
+        img_folder = os.path.join(CURRENT_DIR, "images")
         #creating folders
         os.makedirs(CURRENT_DIR,exist_ok=True)
         os.makedirs(file_path, exist_ok=True)
+        os.makedirs(img_folder, exist_ok=True)
+        
         with open(os.path.join(file_path, file.filename), "wb") as buffer:
             buffer.write(await file.read())
         print("File_name = ", file.filename.split(".")[0])
         
-        doc_id = save_doc_into_db(db=db, filename=file.filename.split(".")[0] , user_id=user.id)
+        doc_id = save_doc_into_db(db=db, filename=file.filename.split(".")[0] , user_id=1)
         logging.info(f"Documnet Id is: {doc_id}")
             
         logging.info("unzipping all the files")
@@ -39,11 +42,20 @@ async def upload_file(file: UploadFile = File(...),  db: Session = Depends(get_d
         project_name = ("".join(os.listdir(os.path.join(CURRENT_DIR,"zip")))).split(".")[0]
         print("zip name",project_name)
 
-        result = [process_pdf(os.path.join(CURRENT_DIR, "pdfs", project_name,file), current_dir= os.path.join(CURRENT_DIR), project_name=project_name) for file in os.listdir(os.path.join(CURRENT_DIR, "pdfs", project_name))]
+        # Create a new folder for this extraction
+        folders = len(os.listdir(img_folder))
+        if folders > 0:
+            images_dir = os.path.join(img_folder, str(folders))
+        else:
+            images_dir = os.path.join(img_folder, "0")
+        
+        print("images folder", images_dir)
+        os.makedirs(images_dir, exist_ok=True)
+        result = [process_pdf(os.path.join(CURRENT_DIR, "pdfs", project_name,file), folder_path= images_dir, project_name=project_name) for file in os.listdir(os.path.join(CURRENT_DIR, "pdfs", project_name))]
         logging.info("converted to images Done")
         
         logging.info("sending images to gpt")
-        response = upload_image_as_message(images_path=os.path.join(CURRENT_DIR, "images"))
+        response = upload_image_as_message(images_path=images_dir)
         logging.info("response:", response)
         
         new_analysis = models.AnalysisResult(

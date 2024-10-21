@@ -48,7 +48,7 @@ def formal_checking(docs: list):
     
     
 
-def process_pdf(pdf_path, dpi=300, current_dir: str = None, project_name: str = None):
+def process_pdf(pdf_path, dpi=300, folder_path: str = None, project_name: str = None):
     """
     Convert each page of the PDF into a high-quality image using PyMuPDF.
     
@@ -59,8 +59,8 @@ def process_pdf(pdf_path, dpi=300, current_dir: str = None, project_name: str = 
     Returns:
     list: Paths to the extracted images
     """
-    folder_path = os.path.join(current_dir, "images")
-    os.makedirs(folder_path, exist_ok=True)
+    # folder_path = os.path.join(current_dir, "images")
+    # os.makedirs(folder_path, exist_ok=True)
     doc = fitz.open(pdf_path)
     image_paths = []
     
@@ -91,7 +91,7 @@ def process_pdf(pdf_path, dpi=300, current_dir: str = None, project_name: str = 
     doc.close()
     return image_paths
 
-def process_plan_pdf(pdf_path, dpi=300, current_dir: str = None, project_name: str = None):
+def process_plan_pdf(pdf_path, dpi=300, folder_path: str = None, project_name: str = None):
     """
     Convert each page of the PDF into high-quality images split into left and right halves.
 
@@ -104,8 +104,8 @@ def process_plan_pdf(pdf_path, dpi=300, current_dir: str = None, project_name: s
     Returns:
     list: Paths to the extracted images (both left and right halves).
     """
-    folder_path = os.path.join(current_dir, "images")
-    os.makedirs(folder_path, exist_ok=True)
+    # folder_path = os.path.join(current_dir, "images")
+    # os.makedirs(folder_path, exist_ok=True)
     doc = fitz.open(pdf_path)
     image_paths = []
 
@@ -142,4 +142,4 @@ def process_plan_pdf(pdf_path, dpi=300, current_dir: str = None, project_name: s
         image_paths.append(right_img_path)
 
     doc.close()
-    return image_paths
+    return folder_path
