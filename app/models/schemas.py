@@ -56,5 +56,5 @@ class Token(BaseModel):
     token_type: str
 
 
-# class TokenData(BaseModel):
-#     email: str | None = None
+class TokenData(BaseModel):
+    email: str
