@@ -17,10 +17,10 @@ router = APIRouter(
 )
 
 @router.post('/upload/')
-async def upload_file(file: UploadFile = File(...),  db: Session = Depends(get_db),  current_user: schemas.User = Depends(oauth2.get_current_user)):
+async def upload_file(file: UploadFile = File(...),  db: Session = Depends(get_db)):
 
     try:
-        user = db.query(models.User).filter(models.User.email == current_user.email).first()
+        # user = db.query(models.User).filter(models.User.email == current_user.email).first()
         file_path:str = os.path.join(CURRENT_DIR, f"zip")
         img_folder = os.path.join(CURRENT_DIR, "images")
         #creating folders
@@ -32,7 +32,7 @@ async def upload_file(file: UploadFile = File(...),  db: Session = Depends(get_d
             buffer.write(await file.read())
         print("File_name = ", file.filename.split(".")[0])
         
-        doc_id = save_doc_into_db(db=db, filename=file.filename.split(".")[0] , user_id=user.id)
+        doc_id = save_doc_into_db(db=db, filename=file.filename.split(".")[0] , user_id=1)
         logging.info(f"Documnet Id is: {doc_id}")
             
         logging.info("unzipping all the files")

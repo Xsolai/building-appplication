@@ -118,7 +118,6 @@ def send_to_gpt(encoded_images:list):
 
         # Extract the assistant's message from the response
         assistant_message = response_json['choices'][0]['message']['content']
-        # print(assistant_message)
         responses.append(assistant_message)
 
     logger.info("Successfully processed images and generated responses.")
@@ -295,6 +294,7 @@ Your task is to:
 2. **Details of Non-compliance:** If applicable, list each unfulfilled guideline with a **reason** for non-compliance.
 3. **Suggestions (Optional):** If possible, provide suggestions for how the building can meet the guidelines.  
 
+Make sure all the output must be in a **German Language**.
 """
     payload = {
         "model": "gpt-4o",
@@ -327,35 +327,6 @@ Your task is to:
 
     logger.info("Successfully processed.")
     return assistant_message
-    
-
-# def final_response(responses:list):
-#     prompt = """You will recieve a list of responses or guidlines. 
-#     Your task is to provide all these guidlines or regulations in points, with proper matrials and measurements, so that I can't miss any important information.
-#     """
-#     responses = " ".join([response for response in responses])
-#     print(responses)
-#     payload = {
-#             "model": "gpt-4o",
-#             "messages": [
-#                 {
-#                     "role": "system",
-#                     "content": prompt
-#                 },
-#                 {
-#                     "role": "user",
-#                     "content": [
-#                         {
-#                             "type": "text",
-#                             "text": responses
-#                         }
-#                     ]
-#                 }
-#             ],
-#             "max_tokens": 4095
-#         }
-#     response_json = call_openai_api(payload=payload)
-#     return response_json['choices'][0]['message']['content']
     
 
 def check_compliance(images_path:str = None):
