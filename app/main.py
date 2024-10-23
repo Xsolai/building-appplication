@@ -4,6 +4,7 @@ from .routes import upload, login, result, upload_B_plan
 from .models import models
 from .database.database import engine
 import uvicorn
+from fastapi.middleware.cors import CORSMiddleware
 
 
 
@@ -18,6 +19,18 @@ async def limit_payload_size(request, call_next):
         return JSONResponse(status_code=413, content={"message": "Payload too large"})
     return await call_next(request)
 
+
+
+
+
+# Enable CORS for specific origins or allow all
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Update with your frontend domains
+    allow_credentials=True,
+    allow_methods=["*"],  # You can restrict to certain methods if needed
+    allow_headers=["*"],  # You can restrict to certain headers if needed
+)
 
 models.Base.metadata.create_all(bind = engine)
 
