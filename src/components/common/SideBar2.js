@@ -2,22 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Home, Folder, FileText, ChevronRight } from 'lucide-react';
 
-const Sidebar = ({ onClose, isMobile, onStatusChange, onSectionChange }) => {
-  const [isOpen, setIsOpen] = useState(true);
+const Sidebar = ({ isOpen, onClose, isMobile, onStatusChange, onSectionChange }) => {
   const [expandedItem, setExpandedItem] = useState(null);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setIsOpen(true);
-      } else {
-        setIsOpen(false);
-      }
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const menuItems = [
     { icon: Home, text: 'Home', section: 'home' },
@@ -53,9 +39,9 @@ const Sidebar = ({ onClose, isMobile, onStatusChange, onSectionChange }) => {
   };
 
   return (
-    <div className={`fixed left-0 top-0 h-full bg-white border-r border-gray-800 transition-all duration-300 ${isOpen ? 'w-64' : 'w-0 md:w-16'}`}>
-      <nav className="mt-20 flex flex-col justify-between h-[calc(100%-4rem)]">
-        <ul className="space-y-2">
+    <div className={`fixed left-0 top-0 h-full bg-white border-r border-gray-800 transition-all duration-300 ease-in-out ${isOpen ? 'w-64' : 'w-0 overflow-hidden'}`}>
+    <nav className="mt-20 flex flex-col justify-between h-[calc(100%-4rem)]">
+    <ul className="space-y-2">
           {menuItems.map((item) => (
             <li key={item.text}>
               <div
@@ -86,28 +72,17 @@ const Sidebar = ({ onClose, isMobile, onStatusChange, onSectionChange }) => {
             </li>
           ))}
         </ul>
-        {isMobile && (
-          <button
-            onClick={() => {
-              setIsOpen(false);
-              onClose();
-            }}
-            className="mb-6 mx-4 px-4 py-2 bg-gray-200 text-gray-800 hover:bg-gray-300 rounded-lg transition-colors duration-200 flex items-center justify-center"
-          >
-            <X size={20} className="mr-2" />
-            Close Menu
-          </button>
-        )}
-      </nav>
-      {!isMobile && (
+      {isMobile && (
         <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="absolute top-4 right-4 p-2 bg-gray-200 text-gray-800 hover:bg-gray-300 rounded-full transition-colors duration-200"
+          onClick={onClose}
+          className="mb-6 mx-4 px-4 py-2 bg-gray-200 text-gray-800 hover:bg-gray-300 rounded-lg transition-colors duration-200 flex items-center justify-center"
         >
-          {isOpen ? <X size={20} /> : <Menu size={20} />}
+          <X size={20} className="mr-2" />
+          Close Menu
         </button>
       )}
-    </div>
+    </nav>
+  </div>
   );
 };
 
