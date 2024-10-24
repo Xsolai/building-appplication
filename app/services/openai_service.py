@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import os
 import logging
 import requests
+from concurrent.futures import ThreadPoolExecutor
 from .image_service import encode_images_to_base64, parse_response_data
 
 # Load environment variables from .env file
@@ -85,14 +86,11 @@ def call_openai_api(payload: dict) -> dict:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Unable to connect to OpenAI.")
 
 
-def send_to_gpt(encoded_images:list):
-    i=0
+def send_to_gpt(encoded_images: list):
     responses = []
-    
-    # sending each image as a message to gpt for analysis
-    for  encoded_image in encoded_images:
-        i+=1
-        print(i)
+
+    def process_image(encoded_image, index):
+        print(f"Processing image {index + 1}")
         payload = {
             "model": "gpt-4o",
             "messages": [
@@ -111,17 +109,21 @@ def send_to_gpt(encoded_images:list):
                         }
                     ]
                 }
-            ],
-            "max_tokens": 4095
+            ]
         }
         response_json = call_openai_api(payload=payload)
-
-        # Extract the assistant's message from the response
         assistant_message = response_json['choices'][0]['message']['content']
+        # print("Assistant msg:", assistant_message)
         responses.append(assistant_message)
 
+    # Using ThreadPoolExecutor to manage threads
+    with ThreadPoolExecutor(max_workers=len(encoded_images)) as executor:
+        for i, encoded_image in enumerate(encoded_images):
+            executor.submit(process_image, encoded_image, i)
+
     logger.info("Successfully processed images and generated responses.")
-    return final_response(responses)  
+    return final_response(responses)
+
 
 
 def final_response(responses:list):
@@ -137,8 +139,6 @@ def final_response(responses:list):
 - volume of the building
 - Technical Data (like Fire resistance classes (EI 90-M, EI 60-M, F90, F60, etc), following strandard heating system or not, etc..) must be in one line
 - Relevant authorities
-
-All these values must be in **German Language** except keys must be in **English**.
     """
     responses = " ".join([response for response in responses])
     payload = {
@@ -169,7 +169,7 @@ All these values must be in **German Language** except keys must be in **English
     return response
 
 # Final method 
-def upload_image_as_message(images_path = None):
+def extracting_project_details(images_path = None):
     """
     Method to analyze images that were converted from PDFs.
     """
@@ -228,20 +228,14 @@ def guidlines():
         if not os.path.exists(images_path):
             raise HTTPException(status_code=404, detail="No images found for analysis.")
 
-        # Convert each image to base64
-        image_files = [os.path.join(images_path, file) for file in os.listdir(images_path) if file.endswith(".png")]
         encoded_images = []
-        # print(image_files)
-        
         responses = []
+        
         encoded_images = encode_images_to_base64(images_path=images_path)
         # print(encoded_images)
         print("encoded images", len(encoded_images))
-        i = 0
-        # Construct the payload for the OpenAI API request
-        for  encoded_image in encoded_images:
-            i+=1
-            print(i)
+        def process_image(encoded_image, index):
+            print(f"Processing image {index + 1}")
             payload = {
                 "model": "gpt-4o",
                 "messages": [
@@ -260,16 +254,17 @@ def guidlines():
                             }
                         ]
                     }
-                ],
-                "max_tokens": 4095
+                ]
             }
             response_json = call_openai_api(payload=payload)
-
-            # Extract the assistant's message from the response
             assistant_message = response_json['choices'][0]['message']['content']
-            # print(assistant_message)
-            
+            # print("Assistant msg:", assistant_message)
             responses.append(assistant_message)
+
+        # Using ThreadPoolExecutor to manage threads
+        with ThreadPoolExecutor(max_workers=len(encoded_images)) as executor:
+            for i, encoded_image in enumerate(encoded_images):
+                executor.submit(process_image, encoded_image, i)
 
         logger.info("Successfully processed.")
         return final_guidlines(responses)
@@ -296,8 +291,8 @@ Your task is to:
 2. **Details of Non-compliance:** If applicable, list each unfulfilled guideline with a **reason** for non-compliance.
 3. **Suggestions (Optional):** If possible, provide suggestions for how the building can meet the guidelines.  
 
-Make sure all the output must be in a **German Language**.
 """
+    building_details = " ".join([response for response in building_details])
     payload = {
         "model": "gpt-4o",
         "messages": [
@@ -329,7 +324,7 @@ Make sure all the output must be in a **German Language**.
 
     logger.info("Successfully processed.")
     return assistant_message
-    
+        
 
 def check_compliance(images_path:str = None):
     """
@@ -345,13 +340,15 @@ def check_compliance(images_path:str = None):
 
         # Convert each image to base64
         encoded_images = []
+        responses = []
         # Convert the image to a base64-encoded string
         encoded_images = encode_images_to_base64(images_path=images_path)
         print("encoded images", len(encoded_images))
-        i = 0
-        payload = {
-            "model": "gpt-4o",
-            "messages": [
+        def process_image(encoded_image, index):
+            print(f"Processing image {index + 1}")
+            payload = {
+                "model": "gpt-4o",
+                "messages": [
                 {
                     "role": "system",
                     "content": CMP_SYSTEM_PROMPT
@@ -366,19 +363,25 @@ def check_compliance(images_path:str = None):
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": f"data:image/jpeg;base64,{encoded_images}"
+                                "url": f"data:image/jpeg;base64,{encoded_image}"
                             }
                         }
                     ]
                 }
             ],
             "max_tokens": 4095
-        }
-        response_json = call_openai_api(payload=payload)
+            }
+            response_json = call_openai_api(payload=payload)
+            assistant_message = response_json['choices'][0]['message']['content']
+            # print("Assistant msg:", assistant_message)
+            responses.append(assistant_message)
 
-        # Extract the assistant's message from the response
-        assistant_message = response_json['choices'][0]['message']['content']
-        return comparison(assistant_message, guidlines= guidliness)
+        # Using ThreadPoolExecutor to manage threads
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            for i, encoded_image in enumerate(encoded_images):
+                executor.submit(process_image, encoded_image, i)
+        print("Now executing comparison method")
+        return comparison(responses, guidlines= guidliness)
 
     except Exception as e:
         logger.error(f"Error processing image: {e}")
