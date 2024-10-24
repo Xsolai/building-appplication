@@ -87,7 +87,8 @@ def process_pdf(pdf_path, dpi=300, folder_path: str = None, project_name: str = 
         img.save(img_path, format="PNG", dpi=(dpi, dpi), quality=95)
         
         image_paths.append(img_path)
-    
+      
+    logging.info("converted pdf to images.")
     doc.close()
     return image_paths
 
