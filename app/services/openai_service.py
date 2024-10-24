@@ -117,7 +117,7 @@ def send_to_gpt(encoded_images: list):
         responses.append(assistant_message)
 
     # Using ThreadPoolExecutor to manage threads
-    with ThreadPoolExecutor(max_workers=len(encoded_images)) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         for i, encoded_image in enumerate(encoded_images):
             executor.submit(process_image, encoded_image, i)
 

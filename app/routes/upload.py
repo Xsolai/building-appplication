@@ -72,7 +72,7 @@ async def upload_file(file: UploadFile = File(...),  db: Session = Depends(get_d
         response = extracting_project_details(images_path=images_dir)
         logging.info("response:", response)
         
-        save_analysis_into_db(response,  doc_id)
+        save_analysis_into_db(db,response,  doc_id)
         return response
         
     except Exception as e:
