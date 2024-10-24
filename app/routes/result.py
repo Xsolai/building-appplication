@@ -1,13 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from ..services.file_service import  unzip_files, save_doc_into_db
-from ..services.pdf_service import process_pdf
-from ..services.openai_service import upload_image_as_message
 from ..database.database import get_db
 from sqlalchemy.orm import Session
 from fastapi import Depends
 from ..models import models, schemas
 from ..authentication import oauth2
-from typing import List
 
 router = APIRouter(
     tags=['project']
