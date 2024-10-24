@@ -63,6 +63,7 @@ async def upload_file(file: UploadFile = File(...),  db: Session = Depends(get_d
 
         for file in pdf_files:
             process_file(file)
+            
         # # Use ThreadPoolExecutor for concurrent processing
         # with ThreadPoolExecutor(max_workers= len(pdf_files)) as executor:
         #     futures = [executor.submit(process_file, file) for file in pdf_files]

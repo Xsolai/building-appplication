@@ -3,7 +3,7 @@ import fitz  # PyMuPDF
 from PIL import Image
 import unicodedata
 import logging
-
+import traceback
 
 # Normalize filenames to ensure special characters are handled consistently
 def normalize_filename(filename):
@@ -48,49 +48,45 @@ def formal_checking(docs: list):
     
     
 
+
+
 def process_pdf(pdf_path, dpi=300, folder_path: str = None, project_name: str = None):
-    """
-    Convert each page of the PDF into a high-quality image using PyMuPDF.
-    
-    Args:
-    pdf_path (str): Path to the PDF file
-    dpi (int): Dots per inch for image resolution (default: 300)
-    
-    Returns:
-    list: Paths to the extracted images
-    """
-    # folder_path = os.path.join(current_dir, "images")
-    # os.makedirs(folder_path, exist_ok=True)
-    doc = fitz.open(pdf_path)
+    try:
+        logging.info(f"Opening PDF: {pdf_path}")
+        doc = fitz.open(pdf_path)
+    except Exception as e:
+        logging.error(f"Failed to open PDF: {str(e)}")
+        logging.error(traceback.format_exc())
+        return []
+
     image_paths = []
-    
-    logging.info(len(doc))
-    logging.info("converting pdfs to images.")
-    # print(f"Range of docs", range((len(doc)+1)))
+    logging.info(f"Number of pages: {len(doc)}")
+
     for i in range(len(doc)):
-        page = doc[i]
-        
-        # Set the matrix for higher resolution
-        zoom = dpi / 72  # 72 is the default PDF resolution
-        mat = fitz.Matrix(zoom, zoom)
-        
-        # Get the pixmap using the matrix for higher resolution
-        pix = page.get_pixmap(matrix=mat, alpha=False)
-        
-        # Convert pixmap to PIL Image
-        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        
-        # Save the image with high quality
-        # print(folder_path)
-        doc_name = doc.name.split(f"{project_name}\\")[1].split(".pdf")[0]
-        img_path = os.path.join(folder_path, f"{doc_name}_page_{i + 1}.png")
-        img.save(img_path, format="PNG", dpi=(dpi, dpi), quality=95)
-        
-        image_paths.append(img_path)
-      
-    logging.info("converted pdf to images.")
+        try:
+            page = doc[i]
+            zoom = dpi / 72
+            mat = fitz.Matrix(zoom, zoom)
+
+            pix = page.get_pixmap(matrix=mat, alpha=False)
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+
+            doc_name = doc.name.split(f"{project_name}{os.path.sep}")[1].split(".pdf")[0]
+            img_path = os.path.join(folder_path, f"{doc_name}_page_{i + 1}.png")
+
+            logging.info(f"Saving image to {img_path}")
+            img.save(img_path, format="PNG", dpi=(dpi, dpi), quality=95)
+
+            image_paths.append(img_path)
+
+        except Exception as e:
+            logging.error(f"Error processing page {i + 1}: {str(e)}")
+            logging.error(traceback.format_exc())
+
     doc.close()
+    logging.info("PDF to image conversion complete.")
     return image_paths
+
 
 def process_plan_pdf(pdf_path, dpi=300, folder_path: str = None, project_name: str = None):
     """
