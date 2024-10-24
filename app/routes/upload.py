@@ -61,10 +61,12 @@ async def upload_file(file: UploadFile = File(...),  db: Session = Depends(get_d
                 project_name=project_name
             )
 
-        # Use ThreadPoolExecutor for concurrent processing
-        with ThreadPoolExecutor(max_workers= len(pdf_files)) as executor:
-            futures = [executor.submit(process_file, file) for file in pdf_files]
-            result = [future.result() for future in as_completed(futures)]
+        for file in pdf_files:
+            process_file(file)
+        # # Use ThreadPoolExecutor for concurrent processing
+        # with ThreadPoolExecutor(max_workers= len(pdf_files)) as executor:
+        #     futures = [executor.submit(process_file, file) for file in pdf_files]
+        #     result = [future.result() for future in as_completed(futures)]
 
         logging.info("Converted PDFs to images successfully")
         
