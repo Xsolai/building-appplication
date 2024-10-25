@@ -55,7 +55,7 @@ const Form = () => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('http://35.156.80.11:8000/upload', {
+      const response = await fetch('https://35.156.80.11:8000/upload', {
         method: 'POST',
         body: formData,
       });
