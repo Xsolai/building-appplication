@@ -5,13 +5,20 @@ import Sidebar from "@/components/common/SideBar2";
 import { Folder, File, ChevronRight, MoreVertical, Plus , Menu } from 'lucide-react';
 import Link from 'next/link';
 
-const ProjectCard = ({ title, status }) => (
+const ProjectCard = ({ title, status, index }) => (
   <div className="flex flex-col">
-    <div className="bg-gray-100 w-full aspect-square"></div>
+    <div className="bg-gray-100 w-full aspect-square relative overflow-hidden rounded-lg">
+      <img 
+        src={`https://www.simplilearn.com/ice9/free_resources_article_thumb/what_is_Computer_Vision.jpg`}
+        alt={title}
+        className="w-full h-full object-cover"
+      />
+    </div>
     <p className="text-sm text-gray-700 mt-2">{title}</p>
     <p className="text-xs text-gray-500 mt-1">{status}</p>
   </div>
 );
+
 
  function OrdnerStruktur() {
   const [hoveredItem, setHoveredItem] = useState(null);
