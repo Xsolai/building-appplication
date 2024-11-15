@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
+from datetime import datetime
 
 
 class User(BaseModel):
@@ -58,3 +59,17 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: str
+
+
+class VoucherCreate(BaseModel):
+    code: str
+
+class VoucherResponse(BaseModel):
+    id: int
+    code: str
+    is_used: bool
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        orm_mode = True

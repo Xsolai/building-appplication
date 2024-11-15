@@ -386,3 +386,42 @@ def check_compliance(images_path:str = None):
     except Exception as e:
         logger.error(f"Error processing image: {e}")
         raise HTTPException(status_code=500, detail="An error occurred while processing the image.")
+    
+
+
+
+
+
+def PdfReport(results):
+    prompt = """  
+I will provide you the result so you should format it in that way that it should look like a pdf report! So that I can use that for future work!
+
+"""
+    results = " ".join([response for response in results])
+    payload = {
+        "model": "gpt-4o",
+        "messages": [
+            {
+                "role": "system",
+                "content": prompt
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": results
+                    }
+                ]
+            }
+        ],
+        "max_tokens": 4095
+    }
+    response_json = call_openai_api(payload=payload)
+
+    # Extract the assistant's message from the response
+    assistant_message = response_json['choices'][0]['message']['content']
+    print("Final compliance status:\n\n\n",assistant_message)
+
+    logger.info("Successfully processed.")
+    return assistant_message

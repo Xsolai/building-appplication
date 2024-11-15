@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, ForeignKey, JSON, Boolean, DateTime
 from ..database.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
+from datetime import datetime
 
 
 # User model with username, email, contact number, and passwords
@@ -58,3 +59,14 @@ class ComplianceStatus(Base):
 
     # Relationship to the document for which compliance is checked
     document = relationship('Document')
+
+
+
+class Voucher(Base):
+    __tablename__ = "vouchers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String, unique=True, nullable=False)
+    is_used = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
