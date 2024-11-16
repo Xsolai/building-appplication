@@ -71,7 +71,7 @@ def process_pdf(pdf_path, dpi=300, folder_path: str = None, project_name: str = 
             pix = page.get_pixmap(matrix=mat, alpha=False)
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
 
-            doc_name = doc.name.split(f"{project_name}{os.path.sep}")[1].split(".pdf")[0]
+            doc_name = doc.name.split(f"{project_name}{os.path.sep}")[2].split(".pdf")[0]
             img_path = os.path.join(folder_path, f"{doc_name}_page_{i + 1}.png")
 
             logging.info(f"Saving image to {img_path}")

@@ -23,70 +23,57 @@ async def upload_file(
     current_user: schemas.User = Depends(oauth2.get_current_user)
 ):
     try:
+        user = db.query(models.User).filter(models.User.email == current_user.email).first()
         # Send email notification to the system admin
-        user_email = current_user.email
-        user_name = current_user.username
+        user_email = user.email
+        user_name = user.username
         send_email_notification(user_email=user_email, user_name=user_name)
         logging.info("Email notification sent to the system admin.")
 
-        
-        file_path: str = os.path.join(CURRENT_DIR, "zip")
-        img_folder = os.path.join(CURRENT_DIR, "images")
-
-        # Creating folders
-        os.makedirs(CURRENT_DIR, exist_ok=True)
+        file_name = file.filename.split(".")[0]
+        file_path:str = os.path.join(CURRENT_DIR,str(user.id), file_name, f"zip")
+        img_folder = os.path.join(CURRENT_DIR, str(user.id), file_name, "images", "Project_images")
+        #creating folders
+        os.makedirs(CURRENT_DIR,exist_ok=True)
         os.makedirs(file_path, exist_ok=True)
         os.makedirs(img_folder, exist_ok=True)
-
-        # Save the uploaded file
         with open(os.path.join(file_path, file.filename), "wb") as buffer:
             buffer.write(await file.read())
-        logging.info(f"File uploaded: {file.filename}")
-
-        # Save document information to the database
-        doc_id = save_doc_into_db(db=db, filename=file.filename.split(".")[0], user_id=current_user.id)
-        logging.info(f"Document ID: {doc_id}")
-
-        # Unzip the uploaded file
-        logging.info("Unzipping files...")
-        unzip_files(os.path.join(file_path, file.filename), os.path.join(CURRENT_DIR, "pdfs"))
-        logging.info("Unzipping completed.")
-
-        # Determine the project name
-        project_name = ("".join(os.listdir(os.path.join(CURRENT_DIR, "zip")))).split(".")[0]
-        logging.info(f"Project name: {project_name}")
-
-        # Prepare the folder for extracted images
-        folders = len(os.listdir(img_folder))
-        images_dir = os.path.join(img_folder, str(folders)) if folders > 0 else os.path.join(img_folder, "0")
-        os.makedirs(images_dir, exist_ok=True)
-
-        # Process PDF files
-        pdf_files = os.listdir(os.path.join(CURRENT_DIR, "pdfs", project_name))
-        logging.info("Starting PDF to image conversion...")
-
+        print("File_name = ", file.filename.split(".")[0])
+        
+        doc_id = save_doc_into_db(db=db, filename=file.filename.split(".")[0] , user_id=user.id)
+        logging.info(f"Documnet Id is: {doc_id}")
+            
+        logging.info("unzipping all the files")
+        unzip_files(os.path.join(file_path, file.filename), os.path.join(CURRENT_DIR, str(user.id), file_name, "pdfs"))
+        logging.info("unzipped done")
+        
+        # project_name = ("".join(os.listdir(os.path.join(CURRENT_DIR,"zip")))).split(".")[0]
+        project_name = file.filename.split(".")[0]
+        print("zip name",project_name)
+        
+        
+        # Threaded PDF processing
+        pdf_files = os.listdir(os.path.join(CURRENT_DIR, str(user.id), file_name, "pdfs", project_name))
+        logging.info("Starting PDF to image conversion")
+        
         def process_file(file):
             return process_pdf(
-                os.path.join(CURRENT_DIR, "pdfs", project_name, file),
-                folder_path=images_dir,
-                project_name=project_name
+                os.path.join(CURRENT_DIR, str(user.id), file_name, "pdfs", project_name, file),
+                folder_path=img_folder,
+                project_name=file_name
             )
 
-        # Process each PDF file
         for file in pdf_files:
             process_file(file)
 
-        logging.info("PDF to image conversion completed.")
-
-        # Extract project details using OpenAI service
-        logging.info("Sending images to GPT for analysis...")
-        response = extracting_project_details(images_path=images_dir)
-        logging.info(f"GPT response: {response}")
-
-        # Save analysis results to the database
-        save_analysis_into_db(db, response, doc_id)
-
+        logging.info("Converted PDFs to images successfully")
         
+        logging.info("sending images to gpt")
+        response = extracting_project_details(images_path=img_folder)
+        logging.info("response:", response)
+        
+        save_analysis_into_db(db=db, response=response,  doc_id = doc_id)
 
         return response
 
