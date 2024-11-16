@@ -27,23 +27,6 @@ router = APIRouter(
     tags=['project']
 )
 
-
-# # Function to generate a PDF report
-# def generate_pdf_report(report_text: str, output_path: str):
-#     pdf = canvas.Canvas(output_path, pagesize=letter)
-#     pdf.setTitle("Compliance Report")
-#     pdf.drawString(100, 750, "Compliance Report")
-#     pdf.drawString(100, 730, "------------------------------")
-    
-#     y = 700
-#     for line in report_text.split("\n"):
-#         pdf.drawString(100, y, line)
-#         y -= 20
-#         if y < 40:  # Create a new page if text exceeds
-#             pdf.showPage()
-#             y = 750
-    
-#     pdf.save()
 def generate_pdf_report(report_text: str, output_path: str):
     """
     Generate a compliance PDF report with proper formatting.
