@@ -217,12 +217,12 @@ def final_guidlines(responses:list):
     return response_json['choices'][0]['message']['content']
     
 
-def guidlines():
+def guidlines(b_plan_path: str = None):
     """
     method to analyze images that were converted from PDFs.
     """
     try:
-        images_path = os.path.join(os.getcwd(), "uploads", "B-plan", "images")
+        images_path = b_plan_path
 
         # Ensure the image directory exists
         if not os.path.exists(images_path):
@@ -326,12 +326,12 @@ Your task is to:
     return assistant_message
         
 
-def check_compliance(images_path:str = None):
+def check_compliance(b_plan_Path: str = None, images_path:str = None):
     """
     Endpoint to analyze images that were converted from PDFs.
     """
     try:
-        guidliness = guidlines()
+        guidliness = guidlines(b_plan_path=b_plan_Path)
         print("Guidlines:\n\n", guidliness)
         
         # Ensure the image directory exists
