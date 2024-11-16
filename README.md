@@ -60,7 +60,7 @@ building-application/
 
 1. Run the application:
     ```bash
-    python -m app.main
+    uvicorn app.main:app --reload
     ```
 
 2. The application should now be accessible locally at `http://localhost:8000/` (or another port if configured).
