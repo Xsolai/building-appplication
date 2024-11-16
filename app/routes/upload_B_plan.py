@@ -132,37 +132,6 @@ async def upload_file(
     current_user: schemas.User = Depends(oauth2.get_current_user)
 ):
     try:
-        # file_path = os.path.join(CURRENT_DIR, "B-plan")
-        # B_plan_images_path = os.path.join(file_path, "images")
-        # os.makedirs(file_path, exist_ok=True)
-        # os.makedirs(B_plan_images_path, exist_ok=True)
-
-        # images_dir = os.listdir(os.path.join(CURRENT_DIR, "images"))
-        # images_path = os.path.join(CURRENT_DIR, "images", images_dir[-1])
-        # logging.info("Images path: %s", images_path)
-
-        # saved_file_path = os.path.join(file_path, file.filename)
-        # with open(saved_file_path, "wb") as buffer:
-        #     buffer.write(await file.read())
-        # logging.info("File_name: %s", file.filename.split(".")[0])
-
-        # # Convert PDF to images
-        # process_plan_pdf(saved_file_path, folder_path=B_plan_images_path, project_name="B-plan")
-        # logging.info("PDF converted to images successfully")
-
-        # # Check compliance using GPT
-        # response = check_compliance(images_path=images_path)
-        # logging.info("Compliance check response: %s", response)
-
-        # # Generate PDF report
-        # report_path = os.path.join(file_path, "Compliance_Report.pdf")
-        # generate_pdf_report(response, report_path)
-        # logging.info("PDF report generated: %s", report_path)
-
-        # # Send email with the PDF report attached and feedback link
-        # send_email_with_report(to_email=current_user.email, pdf_path=report_path, user_id=current_user.id)
-
-        # return Response(content="Report generated and emailed successfully")
         user = db.query(models.User).filter(models.User.email == current_user.email).first()
         
         # Retrieve the latest project for the user
