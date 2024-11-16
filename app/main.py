@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from .routes import upload, login, result, upload_B_plan, voucher
+from .routes import upload, login, result, upload_B_plan, voucher, feedback_router
 from .models import models
 from .database.database import engine
 import uvicorn
@@ -38,6 +38,7 @@ app.include_router(upload.router)
 app.include_router(login.router)
 app.include_router(result.router)
 app.include_router(upload_B_plan.router)
+app.include_router(feedback_router.router)
 
 @app.get("/")
 async def root():

@@ -71,7 +71,8 @@ async def upload_file(
                 folder_path=images_dir,
                 project_name=project_name
             )
-
+        
+      
         # Process each PDF file
         for file in pdf_files:
             process_file(file)

@@ -43,8 +43,8 @@ def generate_pdf_report(report_text: str, output_path: str):
     pdf.save()
 
 
-# Function to send email with the PDF report attachment
-def send_email_with_report(to_email: str, pdf_path: str):
+# Function to send email with the PDF report attachment and feedback link
+def send_email_with_report(to_email: str, pdf_path: str, user_id: int):
     try:
         from_email = "alihasnain2k19@gmail.com"
         from_password = "ghnh erzs xxfx znrq"
@@ -65,8 +65,19 @@ def send_email_with_report(to_email: str, pdf_path: str):
             )
             message.attach(pdf_attachment)
 
-        # Attach a simple text message
-        body = MIMEText("Please find the attached compliance report.", "plain")
+        # Create the feedback link
+        feedback_link = f"http://your-app-url.com/feedback?user_id={user_id}"
+        feedback_message = (
+            f"Please find the attached compliance report.\n\n"
+            f"We value your feedback! To help us improve, please provide your feedback by clicking the link below:\n"
+            f"{feedback_link}\n\n"
+            "Thank you for using our service!\n"
+            "Best Regards,\n"
+            "Compliance Review Team"
+        )
+
+        # Attach the feedback message
+        body = MIMEText(feedback_message, "plain")
         message.attach(body)
 
         # Send the email
@@ -83,9 +94,13 @@ def send_email_with_report(to_email: str, pdf_path: str):
 
 
 
-@router.post('/upload-B-Plan/')
-async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: schemas.User = Depends(oauth2.get_current_user)):
 
+@router.post('/upload-B-Plan/')
+async def upload_file(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(oauth2.get_current_user)
+):
     try:
         file_path = os.path.join(CURRENT_DIR, "B-plan")
         B_plan_images_path = os.path.join(file_path, "images")
@@ -114,8 +129,8 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
         generate_pdf_report(response, report_path)
         logging.info("PDF report generated: %s", report_path)
 
-        # Send email with the PDF report attached
-        send_email_with_report(to_email=current_user.email, pdf_path=report_path)
+        # Send email with the PDF report attached and feedback link
+        send_email_with_report(to_email=current_user.email, pdf_path=report_path, user_id=current_user.id)
 
         return Response(content="Report generated and emailed successfully")
 
@@ -126,3 +141,4 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
     finally:
         # Clean up the directory after processing
         shutil.rmtree(file_path, ignore_errors=True)
+

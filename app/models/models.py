@@ -20,6 +20,7 @@ class User(Base):
 
     # One user can upload many documents
     documents = relationship('Document', back_populates='user')
+    feedbacks = relationship("Feedback", back_populates="user")
 
 # Document model
 class Document(Base):
@@ -70,3 +71,17 @@ class Voucher(Base):
     is_used = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+
+# feedback model
+class Feedback(Base):
+    __tablename__ = "feedbacks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    feedback_text = Column(String, nullable=False)
+    voucher_code = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="feedbacks")

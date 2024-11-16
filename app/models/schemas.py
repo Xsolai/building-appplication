@@ -73,3 +73,12 @@ class VoucherResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+
+class FeedbackCreate(BaseModel):
+    feedback_text: str
+
+class FeedbackResponse(BaseModel):
+    message: str
+    voucher_code: str
