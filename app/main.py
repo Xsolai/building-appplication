@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from .routes import upload, login, result, upload_B_plan, voucher, feedback_router
+from .routes import upload, login, result, upload_B_plan, voucher, feedback_router, auth
 from .models import models
 from .database.database import engine
 import uvicorn
@@ -36,6 +36,7 @@ models.Base.metadata.create_all(bind = engine)
 app.include_router(voucher.router)
 app.include_router(upload.router)
 app.include_router(login.router)
+app.include_router(auth.router)
 app.include_router(result.router)
 app.include_router(upload_B_plan.router)
 app.include_router(feedback_router.router)

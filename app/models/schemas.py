@@ -82,3 +82,14 @@ class FeedbackCreate(BaseModel):
 class FeedbackResponse(BaseModel):
     message: str
     voucher_code: str
+
+
+
+class ForgetPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+    confirm_password: str
