@@ -1,12 +1,8 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
-from app.database.database import SessionLocal
-from app.models.models import User
-from email.mime.base import MIMEBase
-from email import encoders 
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()  # Load environment variables from .env file

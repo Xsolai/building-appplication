@@ -39,11 +39,11 @@ class Projects(BaseModel):
     class Config():
         orm_mode = True
         
-class Results(BaseModel):
-    result_data: Dict[str, Any]
+# class Results(BaseModel):
+#     result_data: Dict[str, Any]
     
-    class Config():
-        orm_mode = True
+#     class Config():
+#         orm_mode = True
         
 class Login(BaseModel):
     email : str
@@ -93,3 +93,21 @@ class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
     confirm_password: str
+
+
+class AnalysisResult(BaseModel):
+    # Define fields based on your database model
+    result: str
+
+class ComplianceStatus(BaseModel):
+    status: str
+    details: str
+
+# class Results(BaseModel):
+#     compliance_status: str
+#     analysis_result: Dict[str, Any]
+#     non_compliant_details: str
+class Results(BaseModel):
+    compliance_status: Optional[str] = None  # Optional with default value None
+    analysis_result: Dict[str, Any]
+    non_compliant_details: Optional[str] = None  # Optional with default value None

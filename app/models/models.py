@@ -43,7 +43,6 @@ class AnalysisResult(Base):
 
     id = Column(Integer, primary_key=True)
     result_data = Column(JSON)  # Store the analysis result as a JSON key-value pair
-    compliance_status = Column(String)  # e.g., 'Compliant', 'Non-Compliant'
     document_id = Column(Integer, ForeignKey('documents.id'))
 
     # Relationship to the document it belongs to

@@ -3,25 +3,25 @@ from fastapi.responses import JSONResponse
 import os
 import logging
 from ..services.pdf_service import process_pdf, process_plan_pdf
-from ..services.openai_service import check_compliance, PdfReport
+from ..services.file_service import save_compliance_into_db
+from ..services.openai_service import check_compliance, compliance_status
 from ..database.database import get_db
 from sqlalchemy.orm import Session
 from fastapi import Depends
 from ..models import models, schemas
 from ..authentication import oauth2
-import shutil
-from ..authentication import oauth2
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 from smtplib import SMTP
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import Paragraph, Frame, Spacer, SimpleDocTemplate
+from reportlab.lib.units import inch
+from reportlab.lib.enums import TA_CENTER
 
 
 CURRENT_DIR = os.path.join(os.getcwd(), "uploads")
@@ -29,55 +29,102 @@ router = APIRouter(
     tags=['project']
 )
 
-
-# Function to generate a PDF report
 def generate_pdf_report(report_text: str, output_path: str):
     """
-    Generate a compliance PDF report with proper formatting.
+    Generate a comprehensive and professionally formatted PDF report.
 
     Args:
-    - report_text: The report content as a string.
-    - output_path: The file path to save the PDF report.
+    - report_text: The document content as a string
+    - output_path: The file path to save the PDF report
     """
+    report_text = report_text.replace(":**", "")
     # Create the PDF document
-    pdf = SimpleDocTemplate(output_path, pagesize=letter)
+    pdf = SimpleDocTemplate(output_path, pagesize=letter, 
+                            rightMargin=72, leftMargin=72, 
+                            topMargin=72, bottomMargin=18)
     
-    # Define styles for the report
+    # Define styles
     styles = getSampleStyleSheet()
-    title_style = styles["Title"]
-    subtitle_style = styles["Heading2"]
-    body_style = styles["BodyText"]
     
-    # Start the story (content to add to the PDF)
+    # Custom styles
+    title_style = styles['Title'].clone('Title')
+    title_style.fontSize = 16
+    title_style.textColor = colors.darkblue
+    
+    section_style = styles['Heading2'].clone('SectionHeading')
+    section_style.fontSize = 14
+    section_style.textColor = colors.darkblue
+    section_style.spaceAfter = 12
+    
+    subsection_style = styles['Heading3'].clone('SubsectionHeading')
+    subsection_style.fontSize = 12
+    subsection_style.textColor = colors.navy
+    subsection_style.spaceAfter = 6
+    
+    body_style = styles['BodyText'].clone('BodyText')
+    body_style.fontSize = 10
+    body_style.leading = 14
+    
+    bullet_style = ParagraphStyle(
+        'BulletStyle',
+        parent=body_style,
+        leftIndent=20,
+        bulletIndent=10,
+        spaceAfter=6,
+        bulletText='•'
+    )
+    
+    bold_style = styles['BodyText'].clone('BoldStyle')
+    bold_style.fontName = 'Helvetica-Bold'
+    
+    # Prepare the content
     story = []
 
-    # Add Title
-    story.append(Paragraph("Compliance Report", title_style))
-    story.append(Spacer(1, 12))  # Add some space
-    
-    # Add a divider
-    story.append(Paragraph("------------------------------", body_style))
-    story.append(Spacer(1, 12))
-    
-    # Add sections based on the report text
-    for line in report_text.split("\n\n"):  # Splitting by double newlines for sections
-        if line.startswith("### "):  # Section Header
-            section_title = line[4:]
-            story.append(Paragraph(section_title, subtitle_style))
-        else:  # Regular content
-            story.append(Paragraph(line, body_style))
-        story.append(Spacer(1, 12))  # Add some space after each section
-    
-    # Build the PDF with the story
-    pdf.build(story)
+    # Add a Title
+    story.append(Paragraph("Building Compliance Report", title_style))
+    story.append(Spacer(1, 0.25*inch))
 
+    # Process the document content
+    lines = report_text.split('\n')
+    
+    for line in lines:
+        line = line.strip()
+        
+        # Handle main headings
+        if line.startswith('### '):
+            story.append(Paragraph(line[4:], section_style))
+            story.append(Spacer(1, 0.1*inch))
+        
+        # Handle subheadings
+        elif line.startswith('- **'):
+            # Remove ** and create a bold paragraph
+            clean_line = line[4:-1]
+            story.append(Paragraph(clean_line, bold_style))
+        
+        # Handle bullet points
+        elif line.startswith('- '):
+            # Remove the '- ' and create a bullet point
+            story.append(Paragraph(line[2:], bullet_style))
+        
+        # Handle regular text
+        elif line and not line.startswith('#'):
+            story.append(Paragraph(line, body_style))
+        
+        # Add some space between sections
+        if line:
+            story.append(Spacer(1, 0.1*inch))
+    
+    # Build the PDF
+    pdf.build(story)
+    
+    print(f"PDF report generated successfully at {output_path}")
 
 
 # Function to send email with the PDF report attachment and feedback link
 def send_email_with_report(to_email: str, pdf_path: str, user_id: int):
     try:
-        from_email = "alihasnain2k19@gmail.com"
-        from_password = "ghnh erzs xxfx znrq"
+        from_email = "sabasaeed410@gmail.com"
+        from_password = "bzns rnnc yaic jjko"
         smtp_server = "smtp.gmail.com"
         smtp_port = 587
 
@@ -161,7 +208,16 @@ async def upload_file(
         logging.info("sending images to gpt")
         response = check_compliance(b_plan_Path=B_plan_images_path, images_path=project_images)
         logging.info("response: %s", response)
-
+        
+        logging.info("Checking compliance status..")
+        cmp_status = compliance_status(response)
+        print("status: ", cmp_status.split(","))
+        details = ",".join([response for response in cmp_status.split(",")[1:]])
+        print("Details: ", details)
+        
+        save_compliance_into_db(db=db, status=cmp_status.split(",")[0],  details=details, doc_id = latest_project.id)
+        logging.info("saved compliance status into db")
+        
         # Generate PDF report
         report_path = os.path.join(file_path, "Compliance_Report.pdf")
         generate_pdf_report(response, report_path)

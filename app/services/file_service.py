@@ -45,7 +45,18 @@ def save_doc_into_db(db, filename:str=None, user_id:int = None):
 def save_analysis_into_db(db, response, doc_id:int = None):
     new_analysis = models.AnalysisResult(
             result_data = response,
-            compliance_status = "Compliant",
+            document_id = doc_id
+            
+        )
+    db.add(new_analysis)
+    db.commit()
+    db.refresh(new_analysis)
+    return new_analysis.id
+
+def save_compliance_into_db(db, status, details, doc_id:int = None):
+    new_analysis = models.ComplianceStatus(
+            status = status,
+            details = details,
             document_id = doc_id
             
         )

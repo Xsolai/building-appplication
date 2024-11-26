@@ -15,7 +15,46 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # System prompts to guide the model
-B_PLAN_SYSTEM_PROMPT = f"Extract all the text that is present in the image. Just focus on the detailed guidelines and provide me in a detailed summary.Also translate into english "
+# B_PLAN_SYSTEM_PROMPT = f"Extract all the text that is present in the image. Just focus on the detailed guidelines and provide me in a detailed summary.Also translate into english "
+B_PLAN_SYSTEM_PROMPT = """
+You are a construction compliance assistant specializing in analyzing and extracting relevant information from images related to construction projects and zoning plans. Your goal is to identify details necessary for evaluating compliance with zoning and construction standards. You will extract these details systematically and clearly so that they can be used in a comparison process using a separate method defined by the user.
+
+#### Process for Extraction:
+
+1. **Image Analysis:**
+   - Identify and extract key zoning plan details from the provided image:
+     - **Location** of the construction project and auxiliary facilities:
+       - Is the construction site within designated areas? Are auxiliary structures located appropriately?
+     - **Type of construction use**:
+       - Is it permissible generally or by exception?
+   - Evaluate construction parameters:
+     - Ground Area Ratio (**GRZ**)
+     - Floor Area Ratio (**GFZ**)
+     - Building height and number of stories
+     - Roof characteristics (shape, dormers, ridge direction)
+   - Check for inclusion of:
+     - Parking space documentation
+     - Open space plan details
+
+2. **Environmental and Structural Regulations:**
+   - Spacing areas:
+     - Extract dimensions related to spacing compliance under state building codes (**HBO**).
+   - Exemptions and deviations:
+     - Identify potential needs for exceptions from the zoning plan or state regulations.
+   - Environmental impact:
+     - Look for evidence of species protection concerns or other ecological risks.
+
+3. **Preparation for Comparison:**
+   - Ensure all extracted details are formatted consistently and clearly for use in the user-defined comparison method.
+   - Highlight any uncertainties or areas requiring further clarification from additional images or documents.
+
+#### Guidelines:
+- Use precise terminology, ensuring technical details are easy to interpret.
+- Clarify ambiguous details or suggest additional data sources (e.g., more images or schematics) if necessary.
+- Do not perform the comparison directly; focus only on extracting and organizing the required information.
+"""
+
+
 CMP_SYSTEM_PROMPT = """
 1. **Task:**  
 - Extract key building details from the provided **images**, with proper measurements and scales, and present them as bullet points.  
@@ -288,9 +327,10 @@ Your task is to:
 
 **Output Requirements:**  
 1. **Compliance Status of the building:** Indicate whether the building is fully compliant or not.
+2. **List of Guidelines:** Provide a detailed list of guidelines that the building does fullfilled.
 2. **Details of Non-compliance:** If applicable, list each unfulfilled guideline with a **reason** for non-compliance.
 3. **Suggestions (Optional):** If possible, provide suggestions for how the building can meet the guidelines.  
-
+4. Provide all the data in bullet points only and use only ### for heading
 """
     building_details = " ".join([response for response in building_details])
     payload = {
@@ -388,8 +428,40 @@ def check_compliance(b_plan_Path: str = None, images_path:str = None):
         raise HTTPException(status_code=500, detail="An error occurred while processing the image.")
     
 
+def compliance_status(results):
+    prompt = """  
+I will provide you the result so you should convert the analysis in to single word like (Compliant, Non-Compliant, or Partially-Compliant) and details.
+Just select from these and your reponse should be in a single word for status as I mentioned.
+The status must be separated by a comma with details 
+"""
+    results = " ".join([response for response in results])
+    payload = {
+        "model": "gpt-4o",
+        "messages": [
+            {
+                "role": "system",
+                "content": prompt
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": results
+                    }
+                ]
+            }
+        ],
+        "max_tokens": 4095
+    }
+    response_json = call_openai_api(payload=payload)
 
+    # Extract the assistant's message from the response
+    assistant_message = response_json['choices'][0]['message']['content']
+    print("Final compliance status:\n\n\n",assistant_message)
 
+    logger.info("Successfully processed.")
+    return assistant_message
 
 
 def PdfReport(results):
