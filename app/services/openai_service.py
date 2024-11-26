@@ -79,7 +79,7 @@ CMP_SYSTEM_PROMPT = """
 """
 SYSTEM_PROMPT = """
 You're an experienced AI-powered arhictecture reviewer.
-German is your native language
+German is your native language. Must provide all details in german language.
 You're familiar with the German building codes and regulations.
 Must provide area and volume details if foun in the content
 Display the details about by extracting info from text and analyse images to understand about the architecture in pdfs:
@@ -326,6 +326,7 @@ Your task is to:
 3. **Flag Non-compliance:** If there are any deviations or unfulfilled guidelines, list them clearly.
 
 **Output Requirements:**  
+- Must provide all details in German Language.
 1. **Compliance Status of the building:** Indicate whether the building is fully compliant or not.
 2. **List of Guidelines:** Provide a detailed list of guidelines that the building does fullfilled.
 2. **Details of Non-compliance:** If applicable, list each unfulfilled guideline with a **reason** for non-compliance.
