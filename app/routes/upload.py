@@ -11,6 +11,7 @@ from ..models import models, schemas
 from ..authentication import oauth2
 from typing import List
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from fastapi.encoders import jsonable_encoder
 from ..utils.email_sender import send_email_notification
 
 CURRENT_DIR = os.path.join(os.getcwd(), "uploads")
@@ -95,7 +96,10 @@ def all(
     db: Session = Depends(get_db),
     current_user: schemas.User = Depends(oauth2.get_current_user)
 ):
+    # Get the current user
     user = db.query(models.User).filter(models.User.email == current_user.email).first()
+
+    # Query all projects for the user
     projects = db.query(models.Document).filter(models.Document.user_id == user.id).all()
 
     if not projects:
@@ -104,4 +108,16 @@ def all(
             detail="No projects are uploaded yet."
         )
 
-    return projects
+    # Add compliance status for each project
+    response = []
+    for project in projects:
+        compliance_status = db.query(models.ComplianceStatus).filter(
+            models.ComplianceStatus.document_id == project.id
+        ).first()
+
+        # Construct response data
+        project_data = jsonable_encoder(project)
+        project_data["status"] = compliance_status.status if compliance_status else "inBearbeitung"
+        response.append(project_data)
+
+    return response

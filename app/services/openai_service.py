@@ -78,8 +78,7 @@ CMP_SYSTEM_PROMPT = """
 
 """
 SYSTEM_PROMPT = """
-You're an experienced AI-powered arhictecture reviewer.
-German is your native language. Must provide all details in german language.
+You're an experienced AI-powered arhictecture reviewer. Must provide all details in german language.
 You're familiar with the German building codes and regulations.
 Must provide area and volume details if foun in the content
 Display the details about by extracting info from text and analyse images to understand about the architecture in pdfs:
@@ -431,9 +430,10 @@ def check_compliance(b_plan_Path: str = None, images_path:str = None):
 
 def compliance_status(results):
     prompt = """  
-I will provide you the result so you should convert the analysis in to single word like (Compliant, Non-Compliant, or Partially-Compliant) and details.
+I will provide you the result so you should convert the analysis in to single word like (abgelehnt and genehmigt) and details.
 Just select from these and your reponse should be in a single word for status as I mentioned.
 The status must be separated by a comma with details 
+Make sure It should be in German .
 """
     results = " ".join([response for response in results])
     payload = {

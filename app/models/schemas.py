@@ -32,11 +32,12 @@ class ShowUser(BaseModel):
     
     class Config():
         orm_mode = True
-        
+
 class Projects(BaseModel):
     file_name: str
-    
-    class Config():
+    status: Optional[str] = None  # Add the optional status field
+
+    class Config:
         orm_mode = True
         
 # class Results(BaseModel):
