@@ -3,3 +3,5 @@ uploads/
 test_buil_app_env/
 
 __pycache__/
+
+.env
