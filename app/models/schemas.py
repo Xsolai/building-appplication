@@ -1,17 +1,33 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, validator
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 
+# class User(BaseModel):
+#     name: str
+#     email: str
+#     contact_number:str
+#     password1: str
+#     password2: str
+    
+#     class Config():
+#         orm_mode = True
 class User(BaseModel):
     name: str
-    email: str
-    contact_number:str
+    email: EmailStr
+    contact_number: str
     password1: str
     password2: str
-    
-    class Config():
+
+    class Config:
         orm_mode = True
+
+    # Validator to check if passwords match
+    @validator("password2")
+    def passwords_match(cls, password2, values):
+        if "password1" in values and password2 != values["password1"]:
+            raise ValueError("Passwords do not match.")
+        return password2
         
 class UpdateUser(BaseModel):
     username: str
