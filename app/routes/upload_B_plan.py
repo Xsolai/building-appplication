@@ -219,7 +219,8 @@ async def upload_file(
         logging.info("Checking compliance status..")
         cmp_status = compliance_status(response)
         # print("status: ", cmp_status.split(","))
-        details = ",".join([response for response in cmp_status.split(",")[1:]])
+        # details = ",".join([response for response in cmp_status.split(",")[1:]])
+        details = ", ".join([response for response in cmp_response_list])
         # print("Details: ", details)
         
         save_compliance_into_db(db=db, status=cmp_status.split(",")[0],  details=details, doc_id = latest_project.id)
