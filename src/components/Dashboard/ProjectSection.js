@@ -1,145 +1,318 @@
 "use client";
-
 import React, { useState } from 'react';
-import { Upload } from 'lucide-react';
+import { PenSquare, AlertCircle, Save, X } from 'lucide-react';
 import Sidebar from "@/components/common/SideBar";
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
+
+
+
+const UploadIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+    <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
+    <g id="SVGRepo_iconCarrier">
+      <path d="M12.5535 2.49392C12.4114 2.33852 12.2106 2.25 12 2.25C11.7894 2.25 11.5886 2.33852 11.4465 2.49392L7.44648 6.86892C7.16698 7.17462 7.18822 7.64902 7.49392 7.92852C7.79963 8.20802 8.27402 8.18678 8.55352 7.88108L11.25 4.9318V16C11.25 16.4142 11.5858 16.75 12 16.75C12.4142 16.75 12.75 16.4142 12.75 16V4.9318L15.4465 7.88108C15.726 8.18678 16.2004 8.20802 16.5061 7.92852C16.8118 7.64902 16.833 7.17462 16.5535 6.86892L12.5535 2.49392Z" fill="#1C274C"></path>
+      <path d="M3.75 15C3.75 14.5858 3.41422 14.25 3 14.25C2.58579 14.25 2.25 14.5858 2.25 15V15.0549C2.24998 16.4225 2.24996 17.5248 2.36652 18.3918C2.48754 19.2919 2.74643 20.0497 3.34835 20.6516C3.95027 21.2536 4.70814 21.5125 5.60825 21.6335C6.47522 21.75 7.57754 21.75 8.94513 21.75H15.0549C16.4225 21.75 17.5248 21.75 18.3918 21.6335C19.2919 21.5125 20.0497 21.2536 20.6517 20.6516C21.2536 20.0497 21.5125 19.2919 21.6335 18.3918C21.75 17.5248 21.75 16.4225 21.75 15.0549V15C21.75 14.5858 21.4142 14.25 21 14.25C20.5858 14.25 20.25 14.5858 20.25 15C20.25 16.4354 20.2484 17.4365 20.1469 18.1919C20.0482 18.9257 19.8678 19.3142 19.591 19.591C19.3142 19.8678 18.9257 20.0482 18.1919 20.1469C17.4365 20.2484 16.4354 20.25 15 20.25H9C7.56459 20.25 6.56347 20.2484 5.80812 20.1469C5.07435 20.0482 4.68577 19.8678 4.40901 19.591C4.13225 19.3142 3.9518 18.9257 3.85315 18.1919C3.75159 17.4365 3.75 16.4354 3.75 15Z" fill="#1C274C"></path>
+    </g>
+  </svg>
+);
+
+const TickIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g id="SVGRepo_iconCarrier" transform="translate(0, -3)">
+      <circle cx="12" cy="12" r="8" fill="#34A853" />
+      <path d="M8 12L10.5 14.5L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" />
+    </g>
+    <g id="SVGRepo_iconCarrier" transform="translate(0, 2)">
+      <path strokeWidth="2" d="M3.75 15C3.75 14.5858 3.41422 14.25 3 14.25C2.58579 14.25 2.25 14.5858 2.25 15V15.0549C2.24998 16.4225 2.24996 17.5248 2.36652 18.3918C2.48754 19.2919 2.74643 20.0497 3.34835 20.6516C3.95027 21.2536 4.70814 21.5125 5.60825 21.6335C6.47522 21.75 7.57754 21.75 8.94513 21.75H15.0549C16.4225 21.75 17.5248 21.75 18.3918 21.6335C19.2919 21.5125 20.0497 21.2536 20.6517 20.6516C21.2536 20.0497 21.5125 19.2919 21.6335 18.3918C21.75 17.5248 21.75 16.4225 21.75 15.0549V15C21.75 14.5858 21.4142 14.25 21 14.25C20.5858 14.25 20.25 14.5858 20.25 15C20.25 16.4354 20.2484 17.4365 20.1469 18.1919C20.0482 18.9257 19.8678 19.3142 19.591 19.591C19.3142 19.8678 18.9257 20.0482 18.1919 20.1469C17.4365 20.2484 16.4354 20.25 15 20.25H9C7.56459 20.25 6.56347 20.2484 5.80812 20.1469C5.07435 20.0482 4.68577 19.8678 4.40901 19.591C4.13225 19.3142 3.9518 18.9257 3.85315 18.1919C3.75159 17.4365 3.75 16.4354 3.75 15Z" fill="#1C274C"></path>
+    </g>
+  </svg>
+);
+
+const ErrorBox = ({ message, onDismiss }) => (
+  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg shadow-sm">
+    <div className="flex items-start">
+      <div className="flex-shrink-0">
+        <AlertCircle className="h-5 w-5 text-red-400" />
+      </div>
+      <div className="ml-3 flex-1">
+        <h3 className="text-sm font-medium text-red-800">Upload Error</h3>
+        <div className="mt-1 text-sm text-red-700">{message}</div>
+      </div>
+      {onDismiss && (
+        <button onClick={onDismiss} className="ml-auto">
+          <X className="h-5 w-5 text-red-400 hover:text-red-500" />
+        </button>
+      )}
+    </div>
+  </div>
+);
 
 const Form = () => {
-  const [formData, setFormData] = useState({
-    projectTitle: '',
-    location: '',
-    clientApplicant: '',
-    projectType: '',
-    buildingClass: '',
-    buildingUsage: '',
-    numberOfFloors: '',
-    grossFloorArea: '',
-    buildingVolume: '',
-    technicalData: '',
-    relevantAuthorities: '',
-    documentList: ''
-  });
+  const router = useRouter();
+  const [projectName, setProjectName] = useState('');
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [isProcessed, setIsProcessed] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    Projekttitel: '',
+    Standort: '',
+    'Auftraggeber / Antragsteller': '',
+    Projekttyp: '',
+    Gebäudeklasse: '',
+    'Nutzung des Gebäudes': '',
+    'Anzahl der Stockwerke': '',
+    Bruttogrundfläche: '',
+    Gebäudekubatur: '',
+    'Technische Daten': '',
+    'Zuständige Behörden': '',
+    Dokumentenliste: ''
+  });
+
+  const getConfig = () => ({
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`,
+      'Content-Type': 'application/json'
+    }
+  });
+
+  const getFormDataConfig = () => ({
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
+    }
+  });
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
-    if (selectedFile) {
-      // Check if the file has .zip extension or is a ZIP type
-      const isZip = selectedFile.name.toLowerCase().endsWith('.zip') || 
-                    selectedFile.type === 'application/zip' || 
-                    selectedFile.type === 'application/x-zip-compressed' ||
-                    selectedFile.type === 'application/octet-stream';
-      
-      if (isZip) {
-        setFile(selectedFile);
-        setError(null);
-      } else {
-        setError('Please select a ZIP file');
-        setFile(null);
-      }
+    if (selectedFile && selectedFile.name.toLowerCase().endsWith('.zip')) {
+      setFile(selectedFile);
+    } else {
+      toast.error('Bitte laden Sie eine ZIP-Datei hoch');
     }
   };
 
-  const uploadFile = async () => {
-    if (!file) {
-      setError("Please select a file to upload");
-      return;
-    }
+  const handleEditField = (key, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
 
+  const handleSaveChanges = async () => {
     setLoading(true);
-    setError(null);
-
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('https://app.saincube.com/upload', {
-        method: 'POST',
-        body: formData,
+      const response = await fetch('http://localhost:8000/api/update-project/', {
+        method: 'PUT',
+        ...getConfig(),
+        body: JSON.stringify(formData)
       });
       
       if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
+        if (response.status === 400) {
+          const errorData = await response.json();
+          toast.error(errorData.message || 'Fehler beim Speichern der Änderungen');
+        } else {
+          toast.error('Ein Fehler ist aufgetreten');
+        }
+        return;
       }
 
-      const data = await response.json();
-      setFormData(data);
-    } catch (error) {
-      console.error('Upload error:', error);
-      setError(error.message || 'Upload failed');
+      toast.success('Änderungen erfolgreich gespeichert');
+      setIsEditing(false);
+    } catch (err) {
+      toast.error('Verbindungsfehler aufgetreten');
     } finally {
       setLoading(false);
     }
   };
 
+  const uploadFile = async () => {
+    if (!file || !projectName) {
+      toast.error('Bitte Projektnamen und Datei auswählen');
+      return;
+    }
+    setLoading(true);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('file', file);
+      formDataToSend.append('name', projectName);
+
+      const response = await fetch('http://localhost:8000/upload/', {
+        method: 'POST',
+        ...getFormDataConfig(),
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        if (response.status === 400) {
+          const errorData = await response.json();
+          toast.error(errorData.message || 'Fehler beim Hochladen der Datei');
+        } else {
+          toast.error('Ein Fehler ist aufgetreten');
+        }
+        return;
+      }
+
+      const data = await response.json();
+      setFormData(data);
+      setIsProcessed(true);
+      toast.success('Datei erfolgreich hochgeladen');
+    } catch (err) {
+      toast.error('Verbindungsfehler aufgetreten');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateProject = () => {
+    if (!projectName) {
+      toast.error('Bitte geben Sie einen Projektnamen ein');
+      return;
+    }
+    router.push('/dashboard');
+  };
+
   return (
     <div className="flex flex-col md:flex-row bg-white">
       <Sidebar />
-      <div className="flex-1 p-4 md:p-8 font-sans">
-        <h1 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6 text-black">New Project</h1>
-        <form onSubmit={(e) => e.preventDefault()}>
-          <div className="mb-4 md:mb-6">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Name:
-            </label>
+      <div className="flex-1 p-8">
+        <h1 className="text-2xl font-bold text-[#1A1A1A] mb-8">Neues Projekt</h1>
+
+        <div className="max-w-3xl space-y-6">
+          <div className="mb-6">
+            <label className="block mb-2 text-[#1A1A1A] font-semibold">Name:</label>
             <input
               type="text"
-              id="name"
-              name="name"
-              className="w-full md:w-1/2 p-2 bg-blue-50 border border-gray-300 rounded"
+              placeholder="Projektnamen eingeben"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              className="w-full p-3 bg-blue-50 rounded-md border border-gray-300 text-[#1A1A1A] focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
           </div>
-          <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4 mb-6 md:mb-8">
-            <label className="flex items-center justify-center px-4 py-2 border border-gray-700 border-dashed rounded text-sm text-gray-600 w-full md:w-auto cursor-pointer">
-              <Upload className="mr-2" size={18} />
-              Upload ZIP file
-              <input
-                type="file"
-                className="hidden"
-                onChange={handleFileChange}
-                accept=".zip,application/zip,application/x-zip-compressed,application/octet-stream"
-              />
-            </label>
-            <button
-              type="button"
-              onClick={uploadFile}
-              className="px-6 py-2 rounded text-sm text-white bg-blue-600 hover:bg-blue-700 flex items-center justify-center w-full md:w-auto disabled:bg-blue-400"
-              disabled={loading || !file}
-            >
-              {loading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Processing...
-                </span>
-              ) : (
-                'Upload and Process'
-              )}
-            </button>
+
+          <div className="flex items-center gap-4">
+            {isProcessed ? (
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  <TickIcon />
+                </div>
+                <div className="px-8 py-3 border-2 border-dashed border-green-500 rounded-md bg-green-50">
+                  <span className="text-[#1A1A1A]">{file.name}</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex">
+                  <UploadIcon />
+                </div>
+                <label className="px-6 py-3 border-2 border-dashed border-[#666666] rounded-md cursor-pointer bg-[#F0F7FF] hover:bg-blue-100 transition-colors">
+                  <span className="text-[#1A1A1A] font-medium">Upload Bauantrag</span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    onChange={handleFileChange}
+                    accept=".zip"
+                  />
+                </label>
+              </>
+            )}
+
+            {!isProcessed && (
+              <button
+                onClick={uploadFile}
+                disabled={!file || !projectName || loading}
+                className={`px-6 py-3 rounded-md font-medium transition-all ${
+                  !file || !projectName || loading
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    : 'bg-[#0070BA] text-white hover:bg-[#005EA8]'
+                }`}
+              >
+                {loading ? 'Wird hochgeladen...' : 'Los gehts!'}
+              </button>
+            )}
           </div>
-          {error && (
-            <div className="text-red-500 mb-4 p-2 bg-red-50 rounded">
-              {error}
+
+          {!file && !isProcessed && (
+            <div className="flex items-start gap-3 p-4 bg-orange-100 border border-orange-200 rounded-lg">
+              <div className="inline-flex justify-center items-center w-6 h-6 bg-orange-500 text-white rounded-full flex-shrink-0">
+                <span className="text-lg">ℹ</span>
+              </div>
+              <span className="text-orange-800 font-medium">
+                Hinweis: Der Bauantrag muss gesammelt als .zip hochgeladen werden
+              </span>
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-x-16 md:gap-y-4">
-            {Object.entries(formData).map(([key, value], index) => (
-              <div key={key} className={index >= 10 ? "col-span-1 md:col-span-2" : ""}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim()}:
-                </label>
-                <p className="text-sm text-gray-900">{value}</p>
+
+          {isProcessed && (
+            <>
+              <div className="relative mt-8 p-6">
+                <div className="absolute right-4 top-1 flex gap-2">
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={handleSaveChanges}
+                        disabled={loading}
+                        className="p-2 text-green-600 hover:bg-green-50 rounded-md transition-colors"
+                      >
+                        <Save size={20} />
+                      </button>
+                      <button
+                        onClick={() => setIsEditing(false)}
+                        className="p-2 text-gray-500 hover:bg-gray-50 rounded-md transition-colors"
+                      >
+                        <X size={20} />
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="p-2 text-gray-500 hover:bg-gray-50 rounded-md transition-colors"
+                    >
+                      <PenSquare size={20} />
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 items-center justify-center">
+                  {Object.entries(formData).map(([key, value]) => (
+                    <div key={key}>
+                      <div className="font-bold text-gray-700 mb-2">{key}:</div>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={value}
+                          onChange={(e) => handleEditField(key, e.target.value)}
+                          className="w-full p-2 border rounded bg-gray-50 text-[#1A1A1A] focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        />
+                      ) : (
+                        <div className="text-gray-600 bg-gray-50 p-2 rounded">{value}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-        </form>
+
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={handleCreateProject}
+                  disabled={!projectName}
+                  className={`px-6 py-3 bg-[#0070BA] text-white rounded-md font-medium 
+                    ${!projectName ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#005EA8]'} 
+                    transition-colors`}
+                >
+                  {loading ? 'Wird erstellt...' : 'Zum Projekt'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
 };
+
 
 export default Form;

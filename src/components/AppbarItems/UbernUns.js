@@ -2,7 +2,6 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import Head from 'next/head';
-import Sidebar from '../common/SideBar';
 
 const UberUns = () => {
   const router = useRouter();
@@ -31,7 +30,7 @@ const UberUns = () => {
 
         <section className={sectionClass}>
           <h2 className={`${subHeadingClass} font-bold text-black`}>Wer wir sind</h2>
-          <p className={'${paragraphClass} text-sm text-gray-700'}>
+          <p className={`${paragraphClass} text-sm text-gray-700`}>
             Das Portal wurde in Zusammenarbeit mit führenden Experten für Bauplanung, Recht und Softwareentwicklung entwickelt. Wir arbeiten eng mit Gemeinden und Bausachverständigen zusammen, um sicherzustellen, dass die Anforderungen des Baugesetzbuchs (BauGB) und der Brandschutzrichtlinien in vollem Umfang berücksichtigt werden. Unsere Partner, darunter Dirk Noll, Thomas Fehling, Alexander Wirth und Nina Bondkirch, bringen ihre Expertise ein, um das Portal stetig zu verbessern.
           </p>
         </section>

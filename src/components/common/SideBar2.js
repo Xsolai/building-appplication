@@ -9,7 +9,7 @@ const Sidebar = ({ isOpen, onClose, isMobile, onStatusChange, onSectionChange })
     { icon: Home, text: 'Home', section: 'home' },
     { icon: Folder, text: 'Ordner', section: 'folder' },
     {
-      icon: FileText,
+       icon: FileText,
       text: 'Meine Projekte',
       subItems: [
         { text: 'in Bearbeitung', status: 'inBearbeitung' },
@@ -39,7 +39,7 @@ const Sidebar = ({ isOpen, onClose, isMobile, onStatusChange, onSectionChange })
   };
 
   return (
-    <div className={`fixed left-0 top-0 h-full bg-white border-r border-gray-800 transition-all duration-300 ease-in-out ${isOpen ? 'w-64' : 'w-0 overflow-hidden'}`}>
+    <div className={`fixed left-0 top-0 h-full bg-white border-r border-gray-800 transition-all duration-300 ease-in-out ${isOpen ? 'w-64' : 'w-0 overflow-hidden'} z-10` }>
     <nav className="mt-20 flex flex-col justify-between h-[calc(100%-4rem)]">
     <ul className="space-y-2">
           {menuItems.map((item) => (

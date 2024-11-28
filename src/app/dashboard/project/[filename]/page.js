@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import AppBar from "@/components/common/AppBar";
 import Sidebar from "@/components/common/SideBar";
 import { Menu } from 'lucide-react';
-import Form from '@/components/Dashboard/ProjectSection';
+import ProjectPage from '@/components/Dashboard/Project';
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -33,7 +33,7 @@ export default function Dashboard() {
       {isMobile && (
         <button
           onClick={toggleSidebar}
-          className="fixed top-20 left-4 z-18 p-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors duration-200 z-10"
+          className="fixed top-20 left-4 z-18 p-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors duration-200 z-50"
           style={{ display: sidebarOpen ? 'none' : 'block' }}
         >
           <Menu size={24} />
@@ -47,7 +47,7 @@ export default function Dashboard() {
         onClick={closeSidebar}
       >
         <AppBar />
-        <Form />
+        <ProjectPage/>
       </div>
     </div>
   );
