@@ -47,7 +47,7 @@ def show(file_name: str, db: Session = Depends(get_db), current_user: schemas.Us
     analysis_results = db.query(models.AnalysisResult).filter(
         models.AnalysisResult.document_id == document.id).first()
     compliance_status = db.query(models.ComplianceStatus).filter(
-        models.ComplianceStatus.document_id == document.id).first()
+        models.ComplianceStatus.document_id == document.id).order_by(models.ComplianceStatus.id.desc()).first()
 
     if not analysis_results and not compliance_status:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
