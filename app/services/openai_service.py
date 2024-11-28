@@ -5,7 +5,7 @@ import os
 import logging
 import requests
 from concurrent.futures import ThreadPoolExecutor
-from .image_service import encode_images_to_base64, parse_response_data
+from .image_service import encode_images_to_base64, parse_response_data, parse_cmp_data
 
 # Load environment variables from .env file
 load_dotenv()
@@ -422,6 +422,47 @@ def check_compliance(b_plan_Path: str = None, images_path:str = None):
                 executor.submit(process_image, encoded_image, i)
         print("Now executing comparison method")
         return comparison(responses, guidlines= guidliness)
+
+    except Exception as e:
+        logger.error(f"Error processing image: {e}")
+        raise HTTPException(status_code=500, detail="An error occurred while processing the image.")
+
+def check_compliance_response(responses:str):
+    """
+    Endpoint to analyze images that were converted from PDFs.
+    """
+    try:
+        prompt = """You will recieve of response which contains all the details about the status and review of compliance status.
+        Your task is to provide each details briefly only in bullet points.
+        Make sure all the details must be in German.
+    """
+        responses = " ".join([response for response in responses])
+        payload = {
+                "model": "gpt-4o",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": prompt
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": responses
+                            }
+                        ]
+                    }
+                ],
+                "max_tokens": 4095
+            }
+        # Send the request to the OpenAI API
+        response_json = call_openai_api(payload=payload)
+
+        # Extract the assistant's message from the response
+        assistant_message = response_json['choices'][0]['message']['content']
+        response = parse_cmp_data(assistant_message.replace("**",""))
+        return response
 
     except Exception as e:
         logger.error(f"Error processing image: {e}")

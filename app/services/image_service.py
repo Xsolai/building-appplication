@@ -51,3 +51,19 @@ def parse_response_data(data):
         result[line_key] = line_value
         
     return result
+
+
+def parse_cmp_data(data):
+    # Strip the data and split it into lines
+    data = data.replace("**","")
+    # data = data.replace("-","")
+    data = data.replace("\"","")
+    # lines = data.strip().split("\n")
+    # print(data)
+    
+    # result =[]
+    # for line in lines:
+    #     print(line)
+    #     result.append(line)
+    
+    return data

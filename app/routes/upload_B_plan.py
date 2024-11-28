@@ -4,7 +4,7 @@ import os
 import logging
 from ..services.pdf_service import process_pdf, process_plan_pdf
 from ..services.file_service import save_compliance_into_db
-from ..services.openai_service import check_compliance, compliance_status
+from ..services.openai_service import check_compliance, compliance_status, check_compliance_response
 from ..database.database import get_db
 from sqlalchemy.orm import Session
 from fastapi import Depends
@@ -209,11 +209,18 @@ async def upload_file(
         response = check_compliance(b_plan_Path=B_plan_images_path, images_path=project_images)
         logging.info("response: %s", response)
         
+        cmp_response = check_compliance_response(responses=response)
+        
+        cmp_response_list = []
+        for line in cmp_response.split("\n"):
+            cmp_response_list.append(line.replace("- ", ""))
+        print("Complaince Report: ", cmp_response)
+        
         logging.info("Checking compliance status..")
         cmp_status = compliance_status(response)
-        print("status: ", cmp_status.split(","))
+        # print("status: ", cmp_status.split(","))
         details = ",".join([response for response in cmp_status.split(",")[1:]])
-        print("Details: ", details)
+        # print("Details: ", details)
         
         save_compliance_into_db(db=db, status=cmp_status.split(",")[0],  details=details, doc_id = latest_project.id)
         logging.info("saved compliance status into db")
@@ -226,7 +233,11 @@ async def upload_file(
         # Send email with the PDF report attached
         send_email_with_report(to_email=user.email, pdf_path=report_path, user_id=user.id)
 
-        return Response(content="Report generated and emailed successfully")
+        return {
+            "message": "Compliance report generated and sent to your email",
+            "Test date": latest_project.uploaded_at,
+            "result": cmp_response_list
+        }
 
 
     except Exception as e:
