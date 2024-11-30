@@ -1,5 +1,5 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException, status
-import os
+import os, time
 import logging
 from ..services.file_service import unzip_files, save_doc_into_db, save_analysis_into_db
 from ..services.pdf_service import process_pdf
@@ -23,7 +23,10 @@ async def upload_file(
     db: Session = Depends(get_db),
     current_user: schemas.User = Depends(oauth2.get_current_user)
 ):
+    
     try:
+        start_time = time.time()
+        print(start_time)
         user = db.query(models.User).filter(models.User.email == current_user.email).first()
         # # Send email notification to the system admin
         # user_email = user.email
@@ -83,7 +86,12 @@ async def upload_file(
             response = extracting_project_details(images_path=img_folder)
             logging.info("response:", response)
             
-            save_analysis_into_db(db=db, response=response,  doc_id = doc_id)
+            end_time = time.time()  # Record end time
+            total_time = (end_time - start_time) / 60
+            print("Total Time: ", total_time)
+            logging.info(f"Total processing time: {total_time:.2f} seconds")
+            
+            save_analysis_into_db(db=db, response=response, duration = total_time,  doc_id = doc_id)
 
             return response
 

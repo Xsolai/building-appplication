@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, JSON, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, JSON, Boolean, DateTime, Float
 from ..database.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
@@ -43,6 +43,7 @@ class AnalysisResult(Base):
 
     id = Column(Integer, primary_key=True)
     result_data = Column(JSON)  # Store the analysis result as a JSON key-value pair
+    duration = Column(Float)
     document_id = Column(Integer, ForeignKey('documents.id'))
 
     # Relationship to the document it belongs to

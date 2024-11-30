@@ -42,9 +42,10 @@ def save_doc_into_db(db, filename:str=None, user_id:int = None):
     db.refresh(new_file)
     return new_file.id
 
-def save_analysis_into_db(db, response, doc_id:int = None):
+def save_analysis_into_db(db, response, duration, doc_id:int = None):
     new_analysis = models.AnalysisResult(
             result_data = response,
+            duration = duration,
             document_id = doc_id
             
         )

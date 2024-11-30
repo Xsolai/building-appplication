@@ -128,3 +128,5 @@ class Results(BaseModel):
     compliance_status: Optional[str] = None  # Optional with default value None
     analysis_result: Dict[str, Any]
     non_compliant_details: Optional[str] = None  # Optional with default value None
+    completed: Optional[str] = None
+    pending: Optional[float] = None
