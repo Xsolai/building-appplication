@@ -15,14 +15,6 @@ async def limit_payload_size(request, call_next):
         return JSONResponse(status_code=413, content={"message": "Payload too large"})
     return await call_next(request)
 
-# Configure CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://frontend.d3srzrfrey696j.amplifyapp.com"],  # Only specific frontend origin
-    allow_credentials=True,  # Required for cookies or credentials
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Restrict to needed HTTP methods
-    allow_headers=["Authorization", "Content-Type"],  # Allow only required headers
-)
 
 # Database and routes setup
 models.Base.metadata.create_all(bind=engine)
