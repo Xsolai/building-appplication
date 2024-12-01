@@ -15,17 +15,17 @@ async def limit_payload_size(request, call_next):
         return JSONResponse(status_code=413, content={"message": "Payload too large"})
     return await call_next(request)
 
-
+# Configure CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://frontend.d3srzrfrey696j.amplifyapp.com","*"],  # Specific origin
-    allow_credentials=True,  # Required if credentials are included in requests
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Limit to specific methods if possible
-    allow_headers=["Authorization", "Content-Type", "*"],  # Explicitly include required headers
+    allow_origins=["https://frontend.d3srzrfrey696j.amplifyapp.com"],  # Only specific frontend origin
+    allow_credentials=True,  # Required for cookies or credentials
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Restrict to needed HTTP methods
+    allow_headers=["Authorization", "Content-Type"],  # Allow only required headers
 )
 
-
-models.Base.metadata.create_all(bind = engine)
+# Database and routes setup
+models.Base.metadata.create_all(bind=engine)
 app.include_router(voucher.router)
 app.include_router(upload.router)
 app.include_router(login.router)
@@ -37,7 +37,6 @@ app.include_router(feedback_router.router)
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Fire Protection Review System API"}
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
