@@ -90,7 +90,13 @@ async def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_d
             status_code=status.HTTP_404_NOT_FOUND, 
             detail="User not found"
         )
-
+    # Validate that the new password is not the same as the old password
+    if Hash.verify(user.password, data.new_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password cannot be the same as the old password"
+        )
+        
     # Hash the new password and update it
     hashed_password = hash_password(data.new_password)
     user.password = hashed_password
