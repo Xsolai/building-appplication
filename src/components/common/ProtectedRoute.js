@@ -22,6 +22,7 @@ const ProtectedRoute = ({ children }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
+          credentials: "include", // Required for sending cookies or credentials
         });
         
         console.log("Response status:", response.status);
