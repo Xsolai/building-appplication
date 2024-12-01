@@ -83,5 +83,7 @@ class Feedback(Base):
     feedback_text = Column(String, nullable=False)
     voucher_code = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    document_id = Column(Integer, ForeignKey('documents.id'), nullable=True)  # Add the foreign key
 
     user = relationship("User", back_populates="feedbacks")
+    document = relationship("Document")

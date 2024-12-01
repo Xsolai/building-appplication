@@ -23,6 +23,10 @@ async def save_feedback(feedback: schemas.FeedbackCreate, db: Session = Depends(
     try:
         # Generate a random voucher code
         voucher_code = generate_voucher_code()
+        
+        user = db.query(models.User).filter(models.User.email == current_user.email).first()
+        # Retrieve the latest project for the user
+        latest_project = db.query(models.Document).filter(models.Document.user_id == user.id).order_by(models.Document.uploaded_at.desc()).first()
 
         # Save the voucher in the database
         new_voucher = models.Voucher(
@@ -37,7 +41,8 @@ async def save_feedback(feedback: schemas.FeedbackCreate, db: Session = Depends(
         new_feedback = models.Feedback(
             user_id=current_user.id,
             feedback_text=feedback.feedback_text,
-            voucher_code=voucher_code
+            voucher_code=voucher_code,
+            document_id = latest_project.id
         )
         db.add(new_feedback)
         db.commit()
@@ -47,7 +52,7 @@ async def save_feedback(feedback: schemas.FeedbackCreate, db: Session = Depends(
         subject = "Thank You for Your Feedback!"
         body = (
             f"Dear {current_user.email},\n\n"
-            "Thank you for providing your valuable feedback!\n"
+            f"Thank you for providing your valuable feedback on {latest_project.file_name}!\n"
             f"As a token of our appreciation, here is your voucher code: {voucher_code}\n"
             "You can use this code for your next submission.\n\n"
             "Best Regards,\n"
