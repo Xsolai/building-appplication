@@ -62,7 +62,7 @@ router = APIRouter(
 def show(file_name: str, db: Session = Depends(get_db), current_user: schemas.User = Depends(oauth2.get_current_user)):
     user = db.query(models.User).filter(models.User.email == current_user.email).first()
     document = db.query(models.Document).filter(
-        models.Document.file_name == file_name, models.Document.user_id == user.id).order_by(models.Document.uploaded_at.desc()).first()
+        models.Document.file_name == file_name, models.Document.user_id == user.id).first()
 
     if not document:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
