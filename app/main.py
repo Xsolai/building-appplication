@@ -6,11 +6,7 @@ from .database.database import engine
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 
-
-
 app = FastAPI(debug=True)
-
-
 
 # Adjust payload limit using middleware
 @app.middleware("http")
@@ -20,12 +16,14 @@ async def limit_payload_size(request, call_next):
     return await call_next(request)
 
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://frontend.d3srzrfrey696j.amplifyapp.com", "*"],  # Specific origin
-    allow_credentials=True,  # Allow cookies or credentials
-    allow_methods=["*"],  # Allow all methods
-    allow_headers=["Authorization", "Content-Type", "*"],  # Include specific headers or all
+    allow_origins=["https://frontend.d3srzrfrey696j.amplifyapp.com"],  # Specific origin
+    allow_credentials=True,  # Required if credentials are included in requests
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Limit to specific methods if possible
+    allow_headers=["Authorization", "Content-Type", "*"],  # Explicitly include required headers
 )
 
 models.Base.metadata.create_all(bind = engine)
