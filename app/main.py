@@ -20,16 +20,12 @@ async def limit_payload_size(request, call_next):
     return await call_next(request)
 
 
-
-
-
-# Enable CORS for specific origins or allow all
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Update with your frontend domains
-    allow_credentials=True,
-    allow_methods=["*"],  # You can restrict to certain methods if needed
-    allow_headers=["*"],  # You can restrict to certain headers if needed
+    allow_origins=["https://frontend.d3srzrfrey696j.amplifyapp.com", "*"],  # Specific origin
+    allow_credentials=True,  # Allow cookies or credentials
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["Authorization", "Content-Type", "*"],  # Include specific headers or all
 )
 
 models.Base.metadata.create_all(bind = engine)
