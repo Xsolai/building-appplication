@@ -16,7 +16,7 @@ const ProtectedRoute = ({ children }) => {
           return;
         }
 
-        const response = await fetch("https://app.saincube.com/app1/auth/verify-token/", {
+        const response = await fetch("https://app.saincube.com/app1/auth/verify-token", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
