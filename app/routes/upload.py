@@ -44,66 +44,66 @@ async def upload_file(
 
         file_name = file.filename.split(".")[0]
         
-        # if db.query(models.Document).filter(models.Document.file_name == file_name, models.Document.user_id == user.id).first():
-        #     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"File with the name {file_name} already exists. Try reloading a file with the different name.")
-        # else:
-        # Send email notification to the system admin
-        user_email = user.email
-        user_name = user.username
-        send_email_notification(user_email=user_email, user_name=user_name)
-        logging.info("Email notification sent to the system admin.")
-        file_path:str = os.path.join(CURRENT_DIR,str(user.id), file_name, f"zip")
-        img_folder = os.path.join(CURRENT_DIR, str(user.id), file_name, "images", "Project_images")
-        #creating folders
-        os.makedirs(CURRENT_DIR,exist_ok=True)
-        os.makedirs(file_path, exist_ok=True)
-        os.makedirs(img_folder, exist_ok=True)
-        with open(os.path.join(file_path, file.filename), "wb") as buffer:
-            buffer.write(await file.read())
-        print("File_name = ", file.filename.split(".")[0])
-        
-        # doc_id = save_doc_into_db(db=db, filename=file.filename.split(".")[0] , user_id=user.id)
-        # logging.info(f"Documnet Id is: {doc_id}")
+        if db.query(models.Document).filter(models.Document.file_name == file_name, models.Document.user_id == user.id).first():
+            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"File with the name {file_name} already exists. Try reloading a file with the different name.")
+        else:
+            # Send email notification to the system admin
+            user_email = user.email
+            user_name = user.username
+            send_email_notification(user_email=user_email, user_name=user_name)
+            logging.info("Email notification sent to the system admin.")
+            file_path:str = os.path.join(CURRENT_DIR,str(user.id), file_name, f"zip")
+            img_folder = os.path.join(CURRENT_DIR, str(user.id), file_name, "images", "Project_images")
+            #creating folders
+            os.makedirs(CURRENT_DIR,exist_ok=True)
+            os.makedirs(file_path, exist_ok=True)
+            os.makedirs(img_folder, exist_ok=True)
+            with open(os.path.join(file_path, file.filename), "wb") as buffer:
+                buffer.write(await file.read())
+            print("File_name = ", file.filename.split(".")[0])
             
-        logging.info("unzipping all the files")
-        unzip_files(os.path.join(file_path, file.filename), os.path.join(CURRENT_DIR, str(user.id), file_name, "pdfs"))
-        logging.info("unzipped done")
-        
-        # project_name = ("".join(os.listdir(os.path.join(CURRENT_DIR,"zip")))).split(".")[0]
-        project_name = file.filename.split(".")[0]
-        print("zip name",project_name)
-        
-        
-        # Threaded PDF processing
-        pdf_files = os.listdir(os.path.join(CURRENT_DIR, str(user.id), file_name, "pdfs", project_name))
-        logging.info("Starting PDF to image conversion")
-        
-        def process_file(file):
-            return process_pdf(
-                os.path.join(CURRENT_DIR, str(user.id), file_name, "pdfs", project_name, file),
-                folder_path=img_folder,
-                project_name=file_name
-            )
+            # doc_id = save_doc_into_db(db=db, filename=file.filename.split(".")[0] , user_id=user.id)
+            # logging.info(f"Documnet Id is: {doc_id}")
+                
+            logging.info("unzipping all the files")
+            unzip_files(os.path.join(file_path, file.filename), os.path.join(CURRENT_DIR, str(user.id), file_name, "pdfs"))
+            logging.info("unzipped done")
+            
+            # project_name = ("".join(os.listdir(os.path.join(CURRENT_DIR,"zip")))).split(".")[0]
+            project_name = file.filename.split(".")[0]
+            print("zip name",project_name)
+            
+            
+            # Threaded PDF processing
+            pdf_files = os.listdir(os.path.join(CURRENT_DIR, str(user.id), file_name, "pdfs", project_name))
+            logging.info("Starting PDF to image conversion")
+            
+            def process_file(file):
+                return process_pdf(
+                    os.path.join(CURRENT_DIR, str(user.id), file_name, "pdfs", project_name, file),
+                    folder_path=img_folder,
+                    project_name=file_name
+                )
 
-        for file in pdf_files:
-            process_file(file)
+            for file in pdf_files:
+                process_file(file)
 
-        logging.info("Converted PDFs to images successfully")
-        
-        logging.info("sending images to gpt")
-        response = extracting_project_details(images_path=img_folder)
-        logging.info("response:", response)
-        
-        end_time = time.time()  # Record end time
-        total_time = (end_time - start_time) / 60
-        print("Total Time: ", total_time)
-        logging.info(f"Total processing time: {total_time:.2f} seconds")
-        
-        doc_id = save_doc_into_db(db=db, filename=project_name , user_id=user.id)
-        logging.info(f"Documnet Id is: {doc_id}")
-        save_analysis_into_db(db=db, response=response, duration = total_time,  doc_id = doc_id)
+            logging.info("Converted PDFs to images successfully")
+            
+            logging.info("sending images to gpt")
+            response = extracting_project_details(images_path=img_folder)
+            logging.info("response:", response)
+            
+            end_time = time.time()  # Record end time
+            total_time = (end_time - start_time) / 60
+            print("Total Time: ", total_time)
+            logging.info(f"Total processing time: {total_time:.2f} seconds")
+            
+            doc_id = save_doc_into_db(db=db, filename=project_name , user_id=user.id)
+            # logging.info(f"Documnet Id is: {doc_id}")
+            save_analysis_into_db(db=db, response=response, duration = total_time,  doc_id = doc_id)
 
-        return response
+            return response
 
     except Exception as e:
         logging.error(f"Internal server error: {e}")
