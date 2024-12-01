@@ -22,7 +22,7 @@ async def limit_payload_size(request, call_next):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://frontend.d3srzrfrey696j.amplifyapp.com", "*"],  # Specific origin
+    allow_origins=["https://frontend.d3srzrfrey696j.amplifyapp.com"],  # Specific origin
     allow_credentials=True,  # Allow cookies or credentials
     allow_methods=["*"],  # Allow all methods
     allow_headers=["Authorization", "Content-Type", "*"],  # Include specific headers or all
