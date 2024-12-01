@@ -99,7 +99,7 @@ async def upload_file(
         print("Total Time: ", total_time)
         logging.info(f"Total processing time: {total_time:.2f} seconds")
         
-        doc_id = save_doc_into_db(db=db, filename=file.filename.split(".")[0] , user_id=user.id)
+        doc_id = save_doc_into_db(db=db, filename=project_name , user_id=user.id)
         logging.info(f"Documnet Id is: {doc_id}")
         save_analysis_into_db(db=db, response=response, duration = total_time,  doc_id = doc_id)
 
