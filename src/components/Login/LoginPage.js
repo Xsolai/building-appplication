@@ -46,7 +46,7 @@ const LoginPage = () => {
         formData.append('username', loginData.username);
         formData.append('password', loginData.password);
 
-        const response = await fetch('http://localhost:8000/login', {
+        const response = await fetch('https://app.saincube.com/app1/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -156,18 +156,10 @@ const LoginPage = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-end">
             <div className="text-sm">
               <Link
-                href="/forgot-email"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
-              >
-                Nutzername vergessen?
-              </Link>
-            </div>
-            <div className="text-sm">
-              <Link
-                href="/forgot-password"
+                href="/reset-password"
                 className="font-medium text-indigo-600 hover:text-indigo-500"
               >
                 Passwort vergessen?

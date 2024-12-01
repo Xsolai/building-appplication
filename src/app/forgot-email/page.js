@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import logo from "@/assests/images/logo.svg";
 import Image from "next/image";
+import ProtectedRoute from '@/components/common/ProtectedRoute';
 
 const ForgotEmailPage = () => {
   const [forgotEmailData, setForgotEmailData] = useState({
@@ -37,7 +38,7 @@ const ForgotEmailPage = () => {
       setApiError('');
 
       try {
-        const response = await fetch('http://localhost:8000/forgot-email', {
+        const response = await fetch('https://app.saincube.com/app1/forgot-email', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -67,6 +68,7 @@ const ForgotEmailPage = () => {
   };
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-full md:max-w-md w-full space-y-8">
         <div className="text-center">
@@ -161,6 +163,7 @@ const ForgotEmailPage = () => {
         )}
       </div>
     </div>
+    </ProtectedRoute>
   );
 };
 

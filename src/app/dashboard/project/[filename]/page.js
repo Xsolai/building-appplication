@@ -4,6 +4,7 @@ import AppBar from "@/components/common/AppBar";
 import Sidebar from "@/components/common/SideBar";
 import { Menu } from 'lucide-react';
 import ProjectPage from '@/components/Dashboard/Project';
+import ProtectedRoute from '@/components/common/ProtectedRoute';
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -29,6 +30,7 @@ export default function Dashboard() {
   };
 
   return (
+    <ProtectedRoute>
     <div className="flex h-screen">
       {isMobile && (
         <button
@@ -50,5 +52,6 @@ export default function Dashboard() {
         <ProjectPage/>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

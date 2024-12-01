@@ -4,6 +4,8 @@ import AppBar from '@/components/common/AppBar';
 import Sidebar from '@/components/common/SideBar';
 import { Menu } from 'lucide-react';
 import PrivacyOptions from '@/components/Settings/Privacy';
+import ProtectedRoute from '@/components/common/ProtectedRoute';
+
 
 export default function Privacy() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -36,6 +38,7 @@ export default function Privacy() {
   }
 
   return (
+    <ProtectedRoute>
     <div className="flex h-screen">
       {isMobile && (
         <button
@@ -57,5 +60,6 @@ export default function Privacy() {
         <PrivacyOptions isMobile={isMobile} />
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

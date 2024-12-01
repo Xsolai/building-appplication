@@ -3,9 +3,8 @@ import React, { useState } from 'react';
 import { PenSquare, AlertCircle, Save, X } from 'lucide-react';
 import Sidebar from "@/components/common/SideBar";
 import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast';
-
-
+import toast, { Toaster } from 'react-hot-toast'; // Import Toaster
+import VoucherPopup from './Voucher';
 
 const UploadIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -24,29 +23,7 @@ const TickIcon = () => (
       <circle cx="12" cy="12" r="8" fill="#34A853" />
       <path d="M8 12L10.5 14.5L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" />
     </g>
-    <g id="SVGRepo_iconCarrier" transform="translate(0, 2)">
-      <path strokeWidth="2" d="M3.75 15C3.75 14.5858 3.41422 14.25 3 14.25C2.58579 14.25 2.25 14.5858 2.25 15V15.0549C2.24998 16.4225 2.24996 17.5248 2.36652 18.3918C2.48754 19.2919 2.74643 20.0497 3.34835 20.6516C3.95027 21.2536 4.70814 21.5125 5.60825 21.6335C6.47522 21.75 7.57754 21.75 8.94513 21.75H15.0549C16.4225 21.75 17.5248 21.75 18.3918 21.6335C19.2919 21.5125 20.0497 21.2536 20.6517 20.6516C21.2536 20.0497 21.5125 19.2919 21.6335 18.3918C21.75 17.5248 21.75 16.4225 21.75 15.0549V15C21.75 14.5858 21.4142 14.25 21 14.25C20.5858 14.25 20.25 14.5858 20.25 15C20.25 16.4354 20.2484 17.4365 20.1469 18.1919C20.0482 18.9257 19.8678 19.3142 19.591 19.591C19.3142 19.8678 18.9257 20.0482 18.1919 20.1469C17.4365 20.2484 16.4354 20.25 15 20.25H9C7.56459 20.25 6.56347 20.2484 5.80812 20.1469C5.07435 20.0482 4.68577 19.8678 4.40901 19.591C4.13225 19.3142 3.9518 18.9257 3.85315 18.1919C3.75159 17.4365 3.75 16.4354 3.75 15Z" fill="#1C274C"></path>
-    </g>
   </svg>
-);
-
-const ErrorBox = ({ message, onDismiss }) => (
-  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg shadow-sm">
-    <div className="flex items-start">
-      <div className="flex-shrink-0">
-        <AlertCircle className="h-5 w-5 text-red-400" />
-      </div>
-      <div className="ml-3 flex-1">
-        <h3 className="text-sm font-medium text-red-800">Upload Error</h3>
-        <div className="mt-1 text-sm text-red-700">{message}</div>
-      </div>
-      {onDismiss && (
-        <button onClick={onDismiss} className="ml-auto">
-          <X className="h-5 w-5 text-red-400 hover:text-red-500" />
-        </button>
-      )}
-    </div>
-  </div>
 );
 
 const Form = () => {
@@ -56,6 +33,23 @@ const Form = () => {
   const [loading, setLoading] = useState(false);
   const [isProcessed, setIsProcessed] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showVoucherPopup, setShowVoucherPopup] = useState(false);
+  const [isVoucherVerified, setIsVoucherVerified] = useState(false);
+
+  const handleVoucherSuccess = () => {
+    setIsVoucherVerified(true);
+    uploadFile(); // Proceed with file upload after voucher verification
+  };
+
+    // Update the existing button click handler
+    const handleLetsGoClick = () => {
+      if (!file || !projectName) {
+        toast.error('Bitte Projektnamen und Datei auswählen');
+        return;
+      }
+      setShowVoucherPopup(true);
+    };
+
   const [formData, setFormData] = useState({
     Projekttitel: '',
     Standort: '',
@@ -88,43 +82,9 @@ const Form = () => {
     const selectedFile = event.target.files[0];
     if (selectedFile && selectedFile.name.toLowerCase().endsWith('.zip')) {
       setFile(selectedFile);
+      toast.dismiss();
     } else {
       toast.error('Bitte laden Sie eine ZIP-Datei hoch');
-    }
-  };
-
-  const handleEditField = (key, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
-
-  const handleSaveChanges = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('http://localhost:8000/api/update-project/', {
-        method: 'PUT',
-        ...getConfig(),
-        body: JSON.stringify(formData)
-      });
-      
-      if (!response.ok) {
-        if (response.status === 400) {
-          const errorData = await response.json();
-          toast.error(errorData.message || 'Fehler beim Speichern der Änderungen');
-        } else {
-          toast.error('Ein Fehler ist aufgetreten');
-        }
-        return;
-      }
-
-      toast.success('Änderungen erfolgreich gespeichert');
-      setIsEditing(false);
-    } catch (err) {
-      toast.error('Verbindungsfehler aufgetreten');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -140,28 +100,62 @@ const Form = () => {
       formDataToSend.append('file', file);
       formDataToSend.append('name', projectName);
 
-      const response = await fetch('http://localhost:8000/upload/', {
+      const response = await fetch('https://app.saincube.com/app1/upload/', {
         method: 'POST',
         ...getFormDataConfig(),
         body: formDataToSend,
       });
 
-      if (!response.ok) {
-        if (response.status === 400) {
-          const errorData = await response.json();
-          toast.error(errorData.message || 'Fehler beim Hochladen der Datei');
-        } else {
-          toast.error('Ein Fehler ist aufgetreten');
-        }
+      const data = await response.json();
+
+      // Universal error handling - check all possible error indicators
+      if (data.status_code >= 400 || data.error || data.detail || !response.ok) {
+        const errorMessage = data.detail || data.error || data.message || 'Ein Fehler ist aufgetreten';
+        toast.error(errorMessage);
+        setLoading(false);
         return;
       }
 
-      const data = await response.json();
+      // Success case
       setFormData(data);
       setIsProcessed(true);
       toast.success('Datei erfolgreich hochgeladen');
     } catch (err) {
-      toast.error('Verbindungsfehler aufgetreten');
+      toast.error('Fehler beim Hochladen der Datei');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditField = (key, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const handleSaveChanges = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('https://app.saincube.com/app1/api/update-project/', {
+        method: 'PUT',
+        ...getConfig(),
+        body: JSON.stringify(formData)
+      });
+      
+      const data = await response.json();
+
+      // Universal error handling for save changes
+      if (!response.ok || data.error || data.detail) {
+        const errorMessage = data.detail || data.error || data.message || 'Fehler beim Speichern der Änderungen';
+        toast.error(errorMessage);
+        return;
+      }
+
+      toast.success('Änderungen erfolgreich gespeichert');
+      setIsEditing(false);
+    } catch (err) {
+      toast.error('Fehler beim Speichern der Änderungen');
     } finally {
       setLoading(false);
     }
@@ -177,6 +171,7 @@ const Form = () => {
 
   return (
     <div className="flex flex-col md:flex-row bg-white">
+      <Toaster position="top-right" />
       <Sidebar />
       <div className="flex-1 p-8">
         <h1 className="text-2xl font-bold text-[#1A1A1A] mb-8">Neues Projekt</h1>
@@ -220,26 +215,31 @@ const Form = () => {
               </>
             )}
 
-            {!isProcessed && (
-              <button
-                onClick={uploadFile}
-                disabled={!file || !projectName || loading}
-                className={`px-6 py-3 rounded-md font-medium transition-all ${
-                  !file || !projectName || loading
-                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    : 'bg-[#0070BA] text-white hover:bg-[#005EA8]'
-                }`}
-              >
-                {loading ? 'Wird hochgeladen...' : 'Los gehts!'}
-              </button>
-            )}
+      {!isProcessed && (
+          <button
+            onClick={handleLetsGoClick}
+            disabled={!file || !projectName || loading}
+            className={`px-6 py-3 rounded-md font-medium transition-all ${
+              !file || !projectName || loading
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                : 'bg-[#0070BA] text-white hover:bg-[#005EA8]'
+            }`}
+          >
+            {loading ? 'Wird hochgeladen...' : 'Los gehts!'}
+          </button>
+        )}
+
+        {/* Add the VoucherPopup component */}
+        <VoucherPopup
+          isOpen={showVoucherPopup}
+          onClose={() => setShowVoucherPopup(false)}
+          onSuccess={handleVoucherSuccess}
+        />
           </div>
 
           {!file && !isProcessed && (
             <div className="flex items-start gap-3 p-4 bg-orange-100 border border-orange-200 rounded-lg">
-              <div className="inline-flex justify-center items-center w-6 h-6 bg-orange-500 text-white rounded-full flex-shrink-0">
-                <span className="text-lg">ℹ</span>
-              </div>
+              <AlertCircle className="w-6 h-6 text-orange-500" />
               <span className="text-orange-800 font-medium">
                 Hinweis: Der Bauantrag muss gesammelt als .zip hochgeladen werden
               </span>
@@ -313,6 +313,5 @@ const Form = () => {
     </div>
   );
 };
-
 
 export default Form;

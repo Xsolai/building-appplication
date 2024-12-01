@@ -5,6 +5,7 @@ import Sidebar from "@/components/common/SideBar2";
 import { Folder, File, ChevronRight, MoreVertical, FolderOpen, Plus, Clock, CheckCircle, XCircle, RefreshCw, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import ProtectedRoute from '@/components/common/ProtectedRoute';
 
 
 function OrdnerStruktur() {
@@ -209,7 +210,7 @@ export default function Dashboard() {
           throw new Error('Not authenticated');
         }
 
-        const response = await fetch('http://localhost:8000/projects/', {
+        const response = await fetch('https://app.saincube.com/app1/projects/', {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
@@ -264,8 +265,8 @@ export default function Dashboard() {
   };
 
   const filteredProjects = activeStatus === 'all'
-    ? projects
-    : projects.filter(project => project.status === activeStatus);
+  ? projects
+  : projects.filter(project => project.status.toLowerCase() === activeStatus.toLowerCase());
 
     const ProjectCardSkeleton = () => {
       return (
@@ -509,6 +510,7 @@ export default function Dashboard() {
   };
 
   return (
+    <ProtectedRoute>
     <div className="flex h-screen bg-gray-50">
       {isMobile && (
         <button
@@ -536,5 +538,6 @@ export default function Dashboard() {
         {renderContent()}
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

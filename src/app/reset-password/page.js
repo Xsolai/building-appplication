@@ -8,8 +8,6 @@ import Link from "next/link";
 import Image from "next/image";
 import logo from "@/assests/images/logo.svg";
 import axios from 'axios';
-import ProtectedRoute from '@/components/common/ProtectedRoute';
-
 
 const schema = z.object({
   email: z.string().email('Ungültige E-Mail-Adresse'),
@@ -50,7 +48,6 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <ProtectedRoute>
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
       <Toaster />
       <div className="max-w-full md:max-w-md w-full space-y-8">
@@ -62,6 +59,7 @@ const ResetPasswordPage = () => {
                 alt="Bauantrag DE Logo"
                 width={180}
                 height={60}
+                priority
               />
             </Link>
           </div>
@@ -124,7 +122,6 @@ const ResetPasswordPage = () => {
         </form>
       </div>
     </div>
-    </ProtectedRoute>
   );
 };
 

@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Bell, User, ChevronDown, Info, DollarSign, BookOpen, HelpCircle } from 'lucide-react';
-import logo from "@/assests/images/logo.svg"
+import logo from "@/assests/images/logo.svg";
+import { useRouter } from 'next/navigation';
 
 const AppBar = () => {
-  const [activeMenu, setActiveMenu] = useState(null); // 'profile', 'notifications', 'mobile', 'settings' or null
+  const router = useRouter();
+  const [activeMenu, setActiveMenu] = useState(null);
   const [scrolled, setScrolled] = useState(false);
-
-  const userData = {
-    name: "John Doe",
-    email: "john.doe@example.com"
-  };
+  const [userData, setUserData] = useState({
+    username: '',
+    email: ''
+  });
 
   const notifications = [
     { id: 1, message: 'New message from John', time: '2 mins ago' },
@@ -18,12 +19,41 @@ const AppBar = () => {
   ];
 
   useEffect(() => {
+    const fetchUserData = async () => {
+      const token = localStorage.getItem('access_token');
+
+      try {
+        const response = await fetch("https://app.saincube.com/app1/update-profile", {
+          method: "GET",
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch user data");
+        }
+
+        const data = await response.json();
+        setUserData({
+          username: data.username || '',
+          email: data.email || ''
+        });
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, [router]);
+
+  useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Handle clicking outside to close menus
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest('.menu-container')) {
@@ -34,6 +64,11 @@ const AppBar = () => {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    router.push('/');
+  };
 
   const toggleMenu = (menuName) => {
     setActiveMenu(activeMenu === menuName ? null : menuName);
@@ -69,7 +104,6 @@ const AppBar = () => {
             </div>
 
             <div className="relative flex space-x-4">
-              {/* Notifications */}
               <div className="menu-container">
                 <button
                   className="p-1 rounded-full my-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
@@ -98,7 +132,6 @@ const AppBar = () => {
                 )}
               </div>
 
-              {/* User Profile */}
               <div className="menu-container">
                 <button 
                   onClick={(e) => {
@@ -107,13 +140,13 @@ const AppBar = () => {
                   }}
                   className="flex text-sm rounded-full focus:outline-none focus:ring-2 my-2 focus:ring-offset-2 focus:ring-gray-500"
                 >
-                  <User className="h-8 w-8 rounded-full bg-gray-400 p-0.5  border border-gray-300" />
+                  <User className="h-8 w-8 rounded-full bg-gray-400 p-0.5 border border-gray-300" />
                 </button>
 
                 {activeMenu === 'profile' && (
                   <div className="absolute right-0 w-64 mt-2 py-2 bg-white border border-gray-200 rounded-md shadow-lg">
                     <div className="px-4 py-2 border-b border-gray-200">
-                      <p className="text-sm font-medium text-gray-900">{userData.name}</p>
+                      <p className="text-sm font-medium text-gray-900">{userData.username}</p>
                       <p className="text-sm text-gray-500">{userData.email}</p>
                     </div>
                     <a href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profil</a>
@@ -132,12 +165,16 @@ const AppBar = () => {
                         <a href="/privacy" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Datenschutzeinstellungen</a>
                       </div>
                     )}
-                    <a href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Abmelden</a>
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Abmelden
+                    </button>
                   </div>
                 )}
               </div>
 
-              {/* Mobile Menu Button */}
               <div className="flex items-center md:hidden menu-container">
                 <button
                   onClick={(e) => {
@@ -155,7 +192,6 @@ const AppBar = () => {
         <div className="h-px bg-black"></div>
       </nav>
 
-      {/* Mobile Menu */}
       {activeMenu === 'mobile' && (
         <div className="fixed inset-0 z-40 bg-white md:hidden" style={{top: '65px'}}>
           <div className="pt-2 pb-3 space-y-1">

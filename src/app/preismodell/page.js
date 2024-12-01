@@ -4,6 +4,8 @@ import AppBar from '@/components/common/AppBar';
 import Sidebar from '@/components/common/SideBar';
 import { Menu } from 'lucide-react';
 import Preismodel from '@/components/AppbarItems/Preismodell';
+import ProtectedRoute from '@/components/common/ProtectedRoute';
+
 
 export default function Preismodell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -49,6 +51,7 @@ export default function Preismodell() {
   // }, []);
 
   return (
+    <ProtectedRoute>
     <div className="flex h-screen">
       {isMobile && (
         <button
@@ -70,5 +73,6 @@ export default function Preismodell() {
         <Preismodel isMobile={isMobile} />
       </div>
     </div>
+    </ProtectedRoute>
   );
   }

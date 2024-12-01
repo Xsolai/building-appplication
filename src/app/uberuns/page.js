@@ -4,6 +4,7 @@ import UberUns from "@/components/AppbarItems/UbernUns";
 import AppBar from '@/components/common/AppBar';
 import Sidebar from '@/components/common/SideBar';
 import { Menu } from 'lucide-react';
+import ProtectedRoute from '@/components/common/ProtectedRoute';
 
 export default function Uberuns() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -50,6 +51,8 @@ export default function Uberuns() {
   // }, []);
 
   return (
+    <ProtectedRoute>
+
     <div className="flex h-screen">
       {isMobile && (
         <button
@@ -71,10 +74,6 @@ export default function Uberuns() {
         <UberUns isMobile={isMobile} />
       </div>
     </div>
+    </ProtectedRoute>
   );
   }
-//     <div className="uberuns">
-//       <UberUns isMobile={isMobile} />
-//     </div>
-//   );
-// }

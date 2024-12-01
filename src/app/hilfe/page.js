@@ -4,6 +4,8 @@ import AppBar from '@/components/common/AppBar';
 import Sidebar from '@/components/common/SideBar';
 import { Menu } from 'lucide-react';
 import HilfeContent from '@/components/AppbarItems/Hilfe';
+import ProtectedRoute from '@/components/common/ProtectedRoute';
+
 
 export default function HilfePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -36,6 +38,7 @@ export default function HilfePage() {
   }
 
   return (
+    <ProtectedRoute>
     <div className="flex h-screen">
       {isMobile && (
         <button
@@ -57,5 +60,6 @@ export default function HilfePage() {
         <HilfeContent isMobile={isMobile} />
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

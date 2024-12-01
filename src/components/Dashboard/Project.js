@@ -10,6 +10,9 @@ import Fire from "@/assests/images/fire.png";
 import Location from "@/assests/images/location.png";
 import Doc from "@/assests/images/docs.png";
 import BPlanModal from './BPlanModal';
+import FeedbackModal from './Feedback';
+import VollstandigkeitForm from './UploadModal';
+import FireProtectionModal from './FireProtection';
 
 // First, create skeleton components
 const HeaderSkeleton = () => (
@@ -54,45 +57,58 @@ const DataGridSkeleton = () => (
   </div>
 );
 
+
 const getStatusStyles = () => {
   const statusMap = {
-    completed: {
+    genehmigt: {
       badge: 'bg-green-50 text-green-700',
       icon: CheckCircle2,
-      iconColor: 'text-green-500',
-      image: Doc.src
+      iconColor: 'text-green-500'
     },
-    pending: {
+    inBearbeitung: {
       badge: 'bg-yellow-50 text-yellow-700',
       icon: Clock,
-      iconColor: 'text-yellow-500',
-      image: Location.src
+      iconColor: 'text-yellow-500'
     },
-    error: {
+    abgelehnt: {
       badge: 'bg-red-50 text-red-700',
       icon: XCircle,
-      iconColor: 'text-red-500',
-      image: Fire.src
+      iconColor: 'text-red-500'
     },
-    locked: {
+    gesperrt: {
       badge: 'bg-gray-50 text-gray-700',
       icon: Lock,
-      iconColor: 'text-gray-500',
-      image: XLogo.src
+      iconColor: 'text-gray-500'
     }
   };
 
-  return (status) => statusMap[status] || statusMap.locked;
+  return (status) => statusMap[status] || statusMap.gesperrt;
+};
+
+// Separate mapping for unit images
+const unitImages = {
+  'Vollständigkeit': Doc.src,
+  'B-Plan': Location.src,
+  'Brandschutz': Fire.src,
+  'Statik': XLogo.src,
 };
 
 const UnitCard = ({ analysisData, title, status, timestamp, locked = false }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const styles = getStatusStyles()(status);
   const StatusIcon = styles.icon;
+  const imageUrl = unitImages[title];
+
+  // Handler function to determine which modal to open
+  const handleCardClick = () => {
+    if (title === 'B-Plan' || title === 'Vollständigkeit' || title === 'Brandschutz') {
+      setIsModalOpen(true);
+    }
+  };
 
   return (
     <>
-      <div className="relative group" onClick={() => title === 'B-Plan' && setIsModalOpen(true)}>
+      <div className="relative group" onClick={handleCardClick}>
         <div className="absolute -top-2 left-3 z-10 px-2 py-1 rounded text-xs font-medium flex items-center gap-1 bg-white border border-black text-black/60 shadow-sm">
           <StatusIcon className={`w-4 h-4 ${styles.iconColor}`} />
           {timestamp}
@@ -100,21 +116,41 @@ const UnitCard = ({ analysisData, title, status, timestamp, locked = false }) =>
         <div className={`relative bg-white rounded-lg border ${locked ? 'opacity-60' : ''} hover:shadow-lg border-black transition-shadow h-full cursor-pointer`}>
           <div className="p-4">
             <div className="w-full aspect-square rounded-lg overflow-hidden mb-4">
-              <img src={styles.image} alt={title} className="w-full h-full object-cover" />
+              <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 text-center">{title}</h3>
           </div>
         </div>
       </div>
-      {title === 'B-Plan' &&     
-      <BPlanModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        analysisData={analysisData}
-      />}
+      
+      {/* Conditional rendering of modals */}
+      {title === 'B-Plan' && (
+        <BPlanModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          analysisData={analysisData}
+        />
+      )}
+      
+      {title === 'Vollständigkeit' && (
+        <VollstandigkeitForm
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          analysisData={analysisData}
+        />
+      )}
+
+      {title === 'Brandschutz' && (
+        <FireProtectionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          analysisData={analysisData}
+        />
+      )}
     </>
   );
 };
+
 
 
 const ProjectPage = () => {
@@ -124,43 +160,74 @@ const ProjectPage = () => {
   const [analysisData, setAnalysisData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pending, setPending] = useState(null); // Add state to handle dynamic pending time
 
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [hasStatusChanged, setHasStatusChanged] = useState(false);
+
+
+    // Add this effect to detect status changes
+    useEffect(() => {
+      if (analysisData?.compliance_status && 
+          ['genehmigt', 'abgelehnt'].includes(analysisData.compliance_status)) {
+        setHasStatusChanged(true);
+      }
+    }, [analysisData?.compliance_status]);
+    
   useEffect(() => {
     // Extract file_name from the pathname
     const segments = pathname.split("/");
     const fileName = decodeURIComponent(segments[segments.length - 1]);
     setHeaderTitle(fileName);
 
-    // Fetch project status based on filename
-    const fetchProjectStatus = async () => {
+    const fetchAllData = async () => {
       try {
         const accessToken = localStorage.getItem('access_token');
         if (!accessToken) {
           throw new Error('Not authenticated');
         }
 
-        const response = await fetch('http://localhost:8000/projects/', {
+        // Fetch project status
+        const projectResponse = await fetch('https://app.saincube.com/app1/projects/', {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
           }
         });
 
-        if (!response.ok) {
+        if (!projectResponse.ok) {
           throw new Error('Failed to fetch projects');
         }
 
-        const projects = await response.json();
-        
-        // Find the matching project by filename
+        const projects = await projectResponse.json();
         const currentProject = projects.find(project => project.file_name === fileName);
-        
+
         if (currentProject) {
           setHeaderStatus(currentProject.status);
+
+          // Fetch analysis data
+          const analysisResponse = await fetch(`/api/projects/${fileName}`, {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!analysisResponse.ok) {
+            throw new Error("Failed to fetch analysis data");
+          }
+
+          const data = await analysisResponse.json();
+          console.log('Analysis Data:', data);  // Debug log
+          setAnalysisData(data);
+
+          // Dynamically update pending status
+          setPending(data.pending); // Set the dynamic pending status here
         } else {
           setError('Project not found');
         }
       } catch (err) {
+        console.error('Error fetching data:', err);  // Debug log
         setError(err.message);
       } finally {
         setLoading(false);
@@ -168,41 +235,9 @@ const ProjectPage = () => {
     };
 
     if (fileName) {
-      fetchProjectStatus();
+      fetchAllData();
     }
   }, [pathname]);
-
-  const fetchAnalysisData = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        throw new Error('Access token not found');
-      }
-
-      const response = await fetch(`/api/projects/${headerTitle}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch analysis data");
-      }
-
-      const data = await response.json();
-      setAnalysisData(data);
-    } catch (error) {
-      console.error(error.message);
-    }
-  };
-
-  useEffect(() => {
-    if (headerTitle) {
-      fetchAnalysisData();
-    }
-  }, [headerTitle]);
 
   const getStatusColor = (status) => {
     const colors = {
@@ -222,30 +257,60 @@ const ProjectPage = () => {
     return formats[status] || status;
   };
 
-  const UnitStatusGrid = () => {
+  const UnitStatusGrid = ({ analysisData }) => {
+    // Function to format pending time dynamically (minutes and seconds)
+    // Function to get timestamp for Vollständigkeit
+    const getVollstandigkeitTimestamp = (completed) => {
+      if (!completed) return 'Status nicht verfügbar';
+      return `Abgeschlossen: ${new Date(completed).toLocaleDateString('de-DE')}`;
+    };
+
+    // Function to get timestamp for compliance status
+    const getComplianceTimestamp = (status, pending) => {
+      switch (status) {
+        case 'genehmigt':
+          return 'Genehmigung erteilt';
+        case 'abgelehnt':
+          return 'Ein Fehler wurde entdeckt';
+        case 'inBearbeitung':
+          return pending ? analysisData?.pending : 'In Bearbeitung';
+        default:
+          return 'In Bearbeitung';
+      }
+    };
+
+    // Function to determine compliance status
+    const getComplianceStatus = (status, pending) => {
+      if (!status && pending) return 'inBearbeitung';
+      return status || 'gesperrt';
+    };
+
+
     const units = [
       {
         title: 'Vollständigkeit',
-        status: 'completed',
-        timestamp: 'Abgeschlossen: 20.10.2024'
+        status: 'genehmigt', // Always completed
+        timestamp: getVollstandigkeitTimestamp(analysisData?.completed)
       },
       {
         title: 'B-Plan',
-        status: 'pending',
-        timestamp: 'Ausstehend: 3 min.'
+        status: getComplianceStatus(analysisData?.compliance_status, analysisData?.pending),
+        timestamp: getComplianceTimestamp(analysisData?.compliance_status, analysisData?.pending)
       },
       {
         title: 'Brandschutz',
-        status: 'error',
-        timestamp: 'Ein Fehler wurde entdeckt'
+        status: 'abgelehnt',
+        timestamp: 'Ein Fehler wurde entdeckt',
+        locked: false
       },
       {
         title: 'Statik',
-        status: 'locked',
+        status: 'gesperrt',
+        timestamp: 'Status nicht verfügbar',
         locked: true
       }
     ];
-  
+
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {units.map((unit, index) => (
@@ -276,9 +341,23 @@ const ProjectPage = () => {
       </div>
     );
   }
-  
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <AppBar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900">Error</h2>
+            <p className="mt-2 text-gray-600">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="pb-12 bg-gray-50">
       <AppBar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
@@ -293,21 +372,35 @@ const ProjectPage = () => {
 
         <div className="bg-white rounded-lg shadow-sm mb-6">
           <div className="p-6">
-            <div className="flex items-start">
+            <div className="flex flex-col sm:flex-row gap-6 sm:items-center justify-between ">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{headerTitle}</h1>
                 <div className={`mt-2 px-3 py-1 rounded-full text-sm font-medium inline-block ${getStatusColor(headerStatus)}`}>
                   {formatStatus(headerStatus)}
                 </div>
               </div>
+
+              {hasStatusChanged && (
+                <button
+                  onClick={() => setShowFeedbackModal(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Feedback geben
+                </button>
+              )}
             </div>
           </div>
         </div>
 
+        <FeedbackModal
+          isOpen={showFeedbackModal}
+          onClose={() => setShowFeedbackModal(false)}
+        />
+
+
         <div className="bg-white rounded-lg shadow-sm">
           <div className="p-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-2">
-              {/* Render the result_data from analysisData */}
               {analysisData && analysisData.analysis_result && analysisData.analysis_result.result_data &&
                 Object.entries(analysisData.analysis_result.result_data).map(([key, value]) => (
                   <div key={key} className="bg-white p-3">
@@ -319,7 +412,8 @@ const ProjectPage = () => {
             </div>
 
             <div className="mt-16">
-              <UnitStatusGrid />
+              {/* Pass analysisData to UnitStatusGrid */}
+              <UnitStatusGrid analysisData={analysisData} />
             </div>
           </div>
         </div>
