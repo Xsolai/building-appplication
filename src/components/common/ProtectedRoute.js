@@ -25,9 +25,7 @@ const ProtectedRoute = ({ children }) => {
           credentials: "include", // Required for sending cookies or credentials
         });
         
-        console.log("Response status:", response.status);
-        console.log("Response headers:", response.headers);
-        console.log("Redirected URL:", response.url);
+
         
         if (!response.ok) {
           console.error("Response error: ", response.status, await response.text());
