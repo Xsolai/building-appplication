@@ -16,8 +16,6 @@ async def limit_payload_size(request, call_next):
     return await call_next(request)
 
 
-from fastapi.middleware.cors import CORSMiddleware
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://frontend.d3srzrfrey696j.amplifyapp.com"],  # Specific origin
@@ -25,6 +23,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Limit to specific methods if possible
     allow_headers=["Authorization", "Content-Type", "*"],  # Explicitly include required headers
 )
+
 
 models.Base.metadata.create_all(bind = engine)
 app.include_router(voucher.router)
