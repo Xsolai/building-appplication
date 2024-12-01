@@ -25,8 +25,16 @@ async def upload_file(
 ):
     
     try:
+        # Validate file type (only .zip allowed)
+        if not file.filename.endswith(".zip"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid file type. Only .zip files are allowed."
+            )
+
+        
         start_time = time.time()
-        print(start_time)
+        logging.info(start_time)
         user = db.query(models.User).filter(models.User.email == current_user.email).first()
         # # Send email notification to the system admin
         # user_email = user.email
