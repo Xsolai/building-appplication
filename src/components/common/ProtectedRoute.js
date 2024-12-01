@@ -22,6 +22,7 @@ const ProtectedRoute = ({ children }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
+          credentials: "include", // Use this if your backend requires cookies for authentication
         });
         
         console.log("Response status:", response.status);
