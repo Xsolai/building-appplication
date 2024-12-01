@@ -67,43 +67,47 @@ async def forget_password(request: ForgetPasswordRequest, db: Session = Depends(
     return {"message": "Reset password link has been sent to your email."}
 
 
-
 @router.post("/reset-password/")
 async def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
     if data.token not in reset_tokens:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired reset token"
         )
 
-    if data.new_password != data.confirm_password:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="Passwords do not match"
-        )
-
     # Get the user ID associated with the token
-    user_id = reset_tokens.pop(data.token)  # Remove token after use
+    user_id = reset_tokens[data.token]  # Do not pop the token here
     user = db.query(models.User).filter(models.User.id == user_id).first()
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    # Validate that the new password is not the same as the old password
-    if Hash.verify(user.password, data.new_password):
+
+    if data.new_password != data.confirm_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="New password cannot be the same as the old password"
+            detail="Passwords do not match"
         )
-        
+
+    # Check if the new password matches the last password
+    if Hash.verify(user.password, data.new_password):  # Assuming `Hash.verify` compares the hash with the plain-text password
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password cannot be the same as the last password"
+        )
+
     # Hash the new password and update it
-    hashed_password = hash_password(data.new_password)
+    hashed_password = Hash.bcrypt(data.new_password)
     user.password = hashed_password
     db.commit()
 
+    # Remove the token only after successful reset
+    reset_tokens.pop(data.token, None)
+
     return {"message": "Password reset successfully. You can now log in with your new password."}
+
 
 
 @router.post("/verify-token")
