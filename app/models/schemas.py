@@ -44,11 +44,23 @@ class UpdateUser(BaseModel):
 class ShowUser(BaseModel):
     username: str
     email: str
-    contact_number:str
+    title: str | None = None
+    organization: str | None = None
+    work_phone: str | None = None
+    contact_number: str | None = None
     
-    class Config():
+    class Config:
         orm_mode = True
 
+class UpdateUser(BaseModel):
+    username: str | None = None
+    email: str | None = None
+    title: str | None = None
+    organization: str | None = None
+    work_phone: str | None = None
+    contact_number: str | None = None
+
+    
 class Projects(BaseModel):
     file_name: str
     status: Optional[str] = None  # Add the optional status field

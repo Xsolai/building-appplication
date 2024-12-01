@@ -102,12 +102,37 @@ async def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = De
 #         )
  
     
+@router.get("/update-profile", response_model=schemas.ShowUser, status_code=status.HTTP_200_OK, tags=['users'])
+async def get_profile(
+    db: Session = Depends(get_db), 
+    current_user: schemas.User = Depends(oauth2.get_current_user)
+):
+    # Fetch the user from the database
+    user = db.query(models.User).filter(models.User.email == current_user.email).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with the email {current_user.email} is not found"
+        )
+    
+    # Return all user fields
+    return {
+        "username": user.username,
+        "email": user.email,
+        "title": user.title,
+        "organization": user.organization,
+        "work_phone": user.work_phone,
+        "contact_number": user.contact_number
+    }
+
+
 @router.put("/update-profile", response_model=schemas.ShowUser, status_code=status.HTTP_200_OK, tags=['users'])
 async def update_profile(
     request: schemas.UpdateUser, 
     db: Session = Depends(get_db), 
-    current_user: schemas.User = Depends(oauth2.get_current_user)):
-
+    current_user: schemas.User = Depends(oauth2.get_current_user)
+):
     # Fetch the user from the database
     user = db.query(models.User).filter(models.User.email == current_user.email).first()
     
@@ -117,7 +142,7 @@ async def update_profile(
             detail=f"User with the email {current_user.email} is not found"
         )
 
-    # Update user attributes conditionally if provided in the request
+    # Update user attributes conditionally
     if request.username:
         user.username = request.username
     if request.title:
@@ -129,9 +154,8 @@ async def update_profile(
     if request.contact_number:
         user.contact_number = request.contact_number
     
-    # Email is sensitive; ensure uniqueness if the user requests an email change
+    # Handle email changes
     if request.email and request.email != user.email:
-        # Check if the new email already exists
         if db.query(models.User).filter(models.User.email == request.email).first():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -139,7 +163,16 @@ async def update_profile(
             )
         user.email = request.email
 
-    # Commit the changes to the database
+    # Commit changes to the database
     db.commit()
     db.refresh(user)
-    return user
+
+    # Return updated user with all fields
+    return {
+        "username": user.username,
+        "email": user.email,
+        "title": user.title,
+        "organization": user.organization,
+        "work_phone": user.work_phone,
+        "contact_number": user.contact_number
+    }

@@ -42,7 +42,7 @@ async def forget_password(request: ForgetPasswordRequest, db: Session = Depends(
     user = db.query(models.User).filter(models.User.email == request.email).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="User with this email does not exist"
         )
 
@@ -50,8 +50,8 @@ async def forget_password(request: ForgetPasswordRequest, db: Session = Depends(
     reset_token = str(uuid4())
     reset_tokens[reset_token] = user.id  # Map token to user ID
 
-    # Construct reset link (adjust URL based on your frontend/backend setup)
-    reset_link = f"http://your-frontend-url.com/reset-password?token={reset_token}"
+    # Construct reset link with uid/token format
+    reset_link = f"http://localhost:3000/reset-password/{user.id}/{reset_token}"
 
     # Send the reset password email
     subject = "Reset Your Password"
@@ -65,6 +65,7 @@ async def forget_password(request: ForgetPasswordRequest, db: Session = Depends(
     send_reset_password_email(user.email, subject, body)
 
     return {"message": "Reset password link has been sent to your email."}
+
 
 
 @router.post("/reset-password/")
