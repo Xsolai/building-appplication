@@ -1,3 +1,4 @@
+// src/app/dashboard/project/[filename]/page.js
 "use client"
 import { useState, useEffect } from 'react';
 import AppBar from "@/components/common/AppBar";

@@ -1,9 +1,12 @@
+// src/components/Dashboard/BPlanModal.js
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle2, X, UploadIcon, XCircle, Clock } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import dynamic from 'next/dynamic';
 import Location from "@/assests/images/location.png";
+import DragDropUploadPDF from '../common/DragDropUploadPDF';
+import UploadProgress from '../common/UploadProgress';
 
 // Skeleton component for the map
 const MapSkeleton = () => (
@@ -37,7 +40,7 @@ const MapComponent = dynamic(
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
         });
 
-        const Map = ({ center, zoom }) => {
+        const Map = ({ center, zoom, projLocation }) => {
           const [isClient, setIsClient] = useState(false);
 
           useEffect(() => {
@@ -58,7 +61,7 @@ const MapComponent = dynamic(
               />
               <Marker position={center}>
                 <Popup>
-                  Goethestraße 23, 36208 Wildeck
+                  {projLocation === "" ? "Goethestraße 23, 36208 Wildeck" : projLocation}
                 </Popup>
               </Marker>
             </MapContainer>
@@ -92,9 +95,37 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
     Gebäudeklasse: '',
     Prüfdatum: '',
   });
-  const location = [50.9944, 9.9917];
   const [view, setView] = useState("initial");
   const abortController = useRef(new AbortController());
+  const [location, setLocation] = useState([50.9944, 9.9917]);
+  const [nonCompliantDetails, setNonCompliantDetails] = useState(null);
+  
+  useEffect(() => {
+    const fetchCoordinates = async () => {
+      const projectLocation = analysisData?.analysis_result?.result_data?.[" Project location"];
+  
+      if (!projectLocation) {
+        return;
+      }
+
+      const apiUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(projectLocation)}`;
+
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        if (data.length > 0) {
+          setLocation([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
+        }
+      } catch (error) {
+        console.error("Error fetching location:", error);
+      }
+    };
+
+    if (isOpen) {
+      fetchCoordinates();
+    }
+  }, [isOpen, analysisData]);
 
   useEffect(() => {
     if (analysisData?.compliance_status) {
@@ -202,6 +233,10 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
       }
 
       const data = await response.json();
+
+      console.log(data);
+
+      setNonCompliantDetails(data.result.join(", "));
       
       // Ensure compliance_status is either genehmigt or abgelehnt
       data.compliance_status = data.compliance_status === 'genehmigt' ? 'genehmigt' : 'abgelehnt';
@@ -240,8 +275,8 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
   const renderInitialView = () => (
     <div className="h-full">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
-        <div className="flex flex-col justify-between">
-          <div>
+        <div className="flex flex-col">
+          <div className="mb-auto">
             <h2 className="text-xl md:text-2xl lg:text-3xl font-extrabold mb-4">B-Plan Check</h2>
             {Object.entries(projectData).map(([key, value]) => (
               <div key={key} className="flex flex-col sm:flex-row gap-1 sm:gap-2 mb-3">
@@ -251,30 +286,44 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
             ))}
           </div>
 
-          <div className="space-y-3 mt-4">
+          <div className="space-y-3">
             <div className="flex flex-col sm:flex-row gap-6">
-              <div className="flex items-center gap-3 flex-1">
-                <div className="hidden sm:block">
-                  <UploadIcon />
-                </div>
-                {file ? (
-                  <div className="flex-1 px-3 py-2 border-2 border-dashed border-gray-600 rounded-md bg-gray-50 flex justify-between items-center">
-                    <span className="text-gray-900 truncate block">{file.name}</span>
-                    <button onClick={() => setFile(null)} className="ml-2 text-gray-500 hover:text-gray-700">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
+              <div className="flex-1">
+                {isLoading ? (
+                  <UploadProgress isUploading={true} file={file} />
+                ) : file ? (
+                  <UploadProgress 
+                    isUploading={false} 
+                    file={file} 
+                    showSelection={true}
+                    onRemove={() => setFile(null)}
+                  />
                 ) : (
-                  <label className="flex-1 px-3 py-2 border-2 border-dashed border-gray-600 rounded-md cursor-pointer bg-blue-50 hover:bg-blue-100">
-                    <span className="text-gray-900 font-medium">B-Plan hochladen</span>
-                    <input type="file" className="hidden" onChange={handleFileChange} accept=".pdf" />
-                  </label>
+                  <DragDropUploadPDF 
+                    onFileSelect={(selectedFile) => {
+                      if (selectedFile?.type === 'application/pdf') {
+                        setFile(selectedFile);
+                        setError(null);
+                      } else {
+                        setError('Nur PDF-Dateien sind erlaubt');
+                      }
+                    }}
+                    file={file}
+                    loading={isLoading}
+                    acceptedFileType=".pdf"
+                    dropzoneText="PDF-Datei hierher ziehen"
+                    buttonText="B-Plan hochladen"
+                  />
                 )}
               </div>
               <button
                 onClick={handleProcess}
                 disabled={!file || isLoading}
-                className={`px-6 py-2 rounded-md font-medium ${!file || isLoading ? 'bg-gray-200 text-gray-500' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                className={`px-6 py-2 rounded-md font-medium ${
+                  !file || isLoading 
+                    ? 'bg-gray-200 text-gray-500' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
               >
                 Los gehts!
               </button>
@@ -293,7 +342,7 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
 
         <div className="flex flex-col h-full">
           <div className="h-[250px] sm:h-[300px] lg:h-[calc(100%-2rem)] w-full relative z-20">
-            <MapComponent center={location} zoom={15} />
+            <MapComponent center={location} zoom={15} projLocation={analysisData?.analysis_result?.result_data?.[' Project location'] || 'Goethestraße 23, 36208 Wildeck'} />
           </div>
           <div className="mt-2 text-center text-sm text-gray-600">
             {analysisData?.analysis_result?.result_data?.[' Project location'] || 'Loading location...'}
@@ -327,10 +376,10 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
       return formattedContent;
     };
   
-    const content = parseNonComplianceDetails(analysisData?.non_compliant_details);
+    const content = parseNonComplianceDetails(nonCompliantDetails ? nonCompliantDetails : analysisData?.non_compliant_details);
   
     return (
-      <div className="max-h-40 py-2 overflow-y-auto custom-scrollbar bg-gray-50 rounded-lg p-4">
+      <div className="max-h-[50vh] sm:max-h-[60vh] lg:max-h-[45vh] py-2 overflow-y-auto custom-scrollbar bg-gray-50 rounded-lg p-4">
         <div className="space-y-4">
           {content.map((item, index) => {
             if (item.type === 'heading') {
@@ -401,7 +450,7 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
 
         <div className="col-span-12 lg:col-span-5">
           <div className="h-[250px] sm:h-[300px] lg:h-[calc(100%-2rem)]  w-full relative rounded-lg overflow-hidden">
-            <MapComponent center={location} zoom={15} />
+            <MapComponent center={location} zoom={15} projLocation={analysisData?.analysis_result?.result_data?.[' Project location'] || 'Goethestraße 23, 36208 Wildeck'} />
           </div>
           <div className="mt-2 text-center text-sm text-gray-600">
             {analysisData?.analysis_result?.result_data?.[' Project location'] || 'Loading location...'}

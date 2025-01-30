@@ -207,7 +207,7 @@ export default function Dashboard() {
       try {
         const accessToken = localStorage.getItem('access_token');
         if (!accessToken) {
-          throw new Error('Not authenticated');
+          throw new Error('Not authenticated!');
         }
 
         const response = await fetch('https://app.saincube.com/app1/projects/', {

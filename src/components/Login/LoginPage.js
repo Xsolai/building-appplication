@@ -43,6 +43,7 @@ const LoginPage = () => {
 
       try {
         const formData = new URLSearchParams();
+        formData.append('grant_type', 'password');
         formData.append('username', loginData.username);
         formData.append('password', loginData.password);
 

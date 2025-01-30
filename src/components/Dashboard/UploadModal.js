@@ -38,7 +38,7 @@ const MapComponent = dynamic(
             shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
           });
   
-          const Map = ({ center, zoom }) => {
+          const Map = ({ center, zoom, projectLocation }) => {
             const [isClient, setIsClient] = useState(false);
   
             useEffect(() => {
@@ -59,7 +59,7 @@ const MapComponent = dynamic(
                 />
                 <Marker position={center}>
                   <Popup>
-                    Goethestraße 23, 36208 Wildeck
+                    {projectLocation}
                   </Popup>
                 </Marker>
               </MapContainer>
@@ -77,7 +77,36 @@ const MapComponent = dynamic(
   );
 
   const VollstandigkeitForm = ({ isOpen, onClose, analysisData }) => {
-    const location = [50.9944, 9.9917];
+    const [location, setLocation] = useState([50.9944, 9.9917]);
+
+    useEffect(() => {
+      const fetchCoordinates = async () => {
+        const projectLocation = analysisData?.analysis_result?.result_data?.[" Project location"];
+    
+        if (!projectLocation) {
+          return;
+        }
+  
+        const apiUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(projectLocation)}`;
+  
+        try {
+          const response = await fetch(apiUrl);
+          const data = await response.json();
+
+          // console.log(data);
+  
+          if (data.length > 0) {
+            setLocation([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
+          }
+        } catch (error) {
+          console.error("Error fetching location:", error);
+        }
+      };
+  
+      if (isOpen) {
+        fetchCoordinates();
+      }
+    }, [isOpen, analysisData]);
   
     const getBPlanStatus = () => {
       return {
@@ -149,7 +178,7 @@ const MapComponent = dynamic(
   
                 <div className="col-span-12 lg:col-span-5">
                   <div className="h-[250px] sm:h-[300px] lg:h-[calc(100%-2rem)] w-full relative rounded-lg overflow-hidden">
-                    <MapComponent center={location} zoom={15} />
+                    <MapComponent center={location} zoom={15} projectLocation={analysisData?.analysis_result?.result_data?.[' Project location'] || 'Goethestraße 23, 36208 Wildeck'} />
                   </div>
                   <div className="mt-2 text-center text-sm text-gray-600">
                     {analysisData?.analysis_result?.result_data?.[' Project location'] || 'Goethestraße 23, 36208 Wildeck'}

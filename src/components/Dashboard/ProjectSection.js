@@ -1,3 +1,4 @@
+// src/components/Dashboard/ProjectSection.js
 "use client";
 import React, { useState } from 'react';
 import { PenSquare, AlertCircle, Save, X } from 'lucide-react';
@@ -5,6 +6,8 @@ import Sidebar from "@/components/common/SideBar";
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast'; // Import Toaster
 import VoucherPopup from './Voucher';
+import UploadProgress from '../common/UploadProgress';
+import DragDropUpload from './DragDropUpload';
 
 const UploadIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -94,29 +97,27 @@ const Form = () => {
       return;
     }
     setLoading(true);
-
+  
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('file', file);
       formDataToSend.append('name', projectName);
-
+  
       const response = await fetch('https://app.saincube.com/app1/upload/', {
         method: 'POST',
         ...getFormDataConfig(),
         body: formDataToSend,
       });
-
+  
       const data = await response.json();
-
-      // Universal error handling - check all possible error indicators
+  
       if (data.status_code >= 400 || data.error || data.detail || !response.ok) {
         const errorMessage = data.detail || data.error || data.message || 'Ein Fehler ist aufgetreten';
         toast.error(errorMessage);
         setLoading(false);
         return;
       }
-
-      // Success case
+  
       setFormData(data);
       setIsProcessed(true);
       toast.success('Datei erfolgreich hochgeladen');
@@ -188,53 +189,77 @@ const Form = () => {
             />
           </div>
 
-          <div className="flex items-center gap-4">
-            {isProcessed ? (
-              <div className="flex items-center gap-2">
-                <div className="flex">
-                  <TickIcon />
-                </div>
-                <div className="px-8 py-3 border-2 border-dashed border-green-500 rounded-md bg-green-50">
-                  <span className="text-[#1A1A1A]">{file.name}</span>
-                </div>
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center gap-4">
+                {isProcessed ? (
+                  <div className="flex items-center gap-2">
+                    <div className="flex">
+                      <TickIcon />
+                    </div>
+                    <div className="px-8 py-3 border-2 border-dashed border-green-500 rounded-md bg-green-50">
+                      <span className="text-[#1A1A1A]">{file.name}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex flex-col gap-4 w-full">
+                      {(file && !loading) ? (
+                        <UploadProgress 
+                          isUploading={loading} 
+                          file={file} 
+                          showSelection={true}
+                          onRemove={() => setFile(null)}
+                        />
+                      ) : loading ? (
+                        <UploadProgress 
+                          isUploading={loading} 
+                          file={file} 
+                        />
+                      ) : (
+                        <DragDropUpload 
+                          onFileSelect={(selectedFile) => {
+                            if (selectedFile && selectedFile.name.toLowerCase().endsWith('.zip')) {
+                              setFile(selectedFile);
+                              toast.dismiss();
+                            } else if (selectedFile) {
+                              toast.error('Bitte laden Sie eine ZIP-Datei hoch');
+                            }
+                          }}
+                          file={file}
+                          loading={loading}
+                        />
+                      )}
+                      
+                      <button
+                        onClick={handleLetsGoClick}
+                        disabled={!file || !projectName || loading}
+                        className={`px-5 py-3 rounded-md font-medium transition-all ${
+                          !file || !projectName || loading
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                            : 'bg-[#0070BA] text-white hover:bg-[#005EA8]'
+                        }`}
+                      >
+                        {loading ? 'Wird hochgeladen...' : 'Los gehts!'}
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
-            ) : (
-              <>
-                <div className="flex">
-                  <UploadIcon />
+
+              {/* {loading && (
+                <div className="mt-6 w-full max-w-full sm:max-w-2xl">
+                  <UploadProgress isUploading={loading} file={file} />
                 </div>
-                <label className="px-6 py-3 border-2 border-dashed border-[#666666] rounded-md cursor-pointer bg-[#F0F7FF] hover:bg-blue-100 transition-colors">
-                  <span className="text-[#1A1A1A] font-medium">Upload Bauantrag</span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    accept=".zip"
-                  />
-                </label>
-              </>
-            )}
+              )} */}
 
-      {!isProcessed && (
-          <button
-            onClick={handleLetsGoClick}
-            disabled={!file || !projectName || loading}
-            className={`px-6 py-3 rounded-md font-medium transition-all ${
-              !file || !projectName || loading
-                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                : 'bg-[#0070BA] text-white hover:bg-[#005EA8]'
-            }`}
-          >
-            {loading ? 'Wird hochgeladen...' : 'Los gehts!'}
-          </button>
-        )}
-
-        {/* Add the VoucherPopup component */}
-        <VoucherPopup
-          isOpen={showVoucherPopup}
-          onClose={() => setShowVoucherPopup(false)}
-          onSuccess={handleVoucherSuccess}
-        />
+              {/* Add the VoucherPopup component */}
+              <VoucherPopup
+                isOpen={showVoucherPopup}
+                onClose={() => setShowVoucherPopup(false)}
+                onSuccess={handleVoucherSuccess}
+              />
+            </div>
           </div>
 
           {!file && !isProcessed && (

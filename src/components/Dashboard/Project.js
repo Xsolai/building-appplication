@@ -1,3 +1,4 @@
+// src/components/Dashboard/Project.js
 "use client";
 import React, { useState, useEffect } from 'react';
 import { usePathname, useSearchParams } from "next/navigation";
@@ -101,7 +102,7 @@ const UnitCard = ({ analysisData, title, status, timestamp, locked = false }) =>
 
   // Handler function to determine which modal to open
   const handleCardClick = () => {
-    if (title === 'B-Plan' || title === 'Vollständigkeit' || title === 'Brandschutz') {
+    if (title === 'B-Plan' || title === 'Vollständigkeit' /*|| title === 'Brandschutz'*/) {
       setIsModalOpen(true);
     }
   };
@@ -115,10 +116,12 @@ const UnitCard = ({ analysisData, title, status, timestamp, locked = false }) =>
         </div>
         <div className={`relative bg-white rounded-lg border ${locked ? 'opacity-60' : ''} hover:shadow-lg border-black transition-shadow h-full cursor-pointer`}>
           <div className="p-4">
-            <div className="w-full aspect-square rounded-lg overflow-hidden mb-4">
-              <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900">{title}</h3>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 text-center">{title}</h3>
           </div>
         </div>
       </div>
@@ -206,7 +209,7 @@ const ProjectPage = () => {
           setHeaderStatus(currentProject.status);
 
           // Fetch analysis data
-          const analysisResponse = await fetch(`/api/projects/${fileName}`, {
+          const analysisResponse = await fetch(`https://app.saincube.com/app1/projects/${fileName}`, {
             headers: {
               'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
@@ -218,7 +221,7 @@ const ProjectPage = () => {
           }
 
           const data = await analysisResponse.json();
-          console.log('Analysis Data:', data);  // Debug log
+          // console.log('Analysis Data:', data);  // Debug log
           setAnalysisData(data);
 
           // Dynamically update pending status
