@@ -58,7 +58,7 @@ router = APIRouter(
 #             "non_compliant_details": None
 #         }
 
-@router.get('/projects/{file_name}', status_code=200, response_model=schemas.Results)
+@router.get('/projects/{file_name}', status_code=200)
 def show(file_name: str, db: Session = Depends(get_db), current_user: schemas.User = Depends(oauth2.get_current_user)):
     user = db.query(models.User).filter(models.User.email == current_user.email).first()
     document = db.query(models.Document).filter(
@@ -74,8 +74,12 @@ def show(file_name: str, db: Session = Depends(get_db), current_user: schemas.Us
         models.ComplianceStatus.document_id == document.id).order_by(models.ComplianceStatus.id.desc()).first()
 
     if not analysis_results and not compliance_status:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Analysis results for the project with the name {file_name} are not available")
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+        #                     detail=f"Analysis results for the project with the name {file_name} are not available")
+        return {
+            "document_id": document.id,
+            "doc_name": document.file_name
+        }
     
     # Prepare analysis_result excluding 'document_id' and 'id'
     analysis_result_data = jsonable_encoder(analysis_results)
