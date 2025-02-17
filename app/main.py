@@ -8,12 +8,21 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(debug=True)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True, 
+    allow_methods=["*"], 
+    allow_headers=["*"],
+)
+
 # Adjust payload limit using middleware
 @app.middleware("http")
 async def limit_payload_size(request, call_next):
     if request.headers.get('content-length') and int(request.headers.get('content-length')) > 50 * 1024 * 1024:  # 50MB
         return JSONResponse(status_code=413, content={"message": "Payload too large"})
     return await call_next(request)
+
 
 
 # Database and routes setup
