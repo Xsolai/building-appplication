@@ -5,6 +5,7 @@ from ..database.database import get_db
 from ..models import models, schemas
 from ..services.email_service import send_thank_you_email
 from ..authentication.oauth2 import get_current_user
+from app.services.voucher_service import create_voucher
 import random
 import string
 
@@ -141,3 +142,9 @@ async def get_feedbacks(db: Session = Depends(get_db)):
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+# @router.post("/generate", summary="Generate a new voucher")
+# def generate_voucher(db: Session = Depends(get_db)):
+#     voucher = create_single_voucher(db)
+#     return {"message": "Voucher generated successfully", "voucher_code": voucher.code}

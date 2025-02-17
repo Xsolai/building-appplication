@@ -1,18 +1,18 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException, status
-import os, time
+import os, time, json
 import logging
-from ..services.file_service import unzip_files, save_doc_into_db, save_analysis_into_db
+from ..services.file_service import unzip_files, save_doc_into_db, save_analysis_into_db, save_project_details_into_db
 from ..services.pdf_service import process_pdf
-from ..services.openai_service import extracting_project_details
+from ..services.openai_service import extracting_project_details, extract_location
 from ..database.database import get_db
 from sqlalchemy.orm import Session
 from fastapi import Depends
 from ..models import models, schemas
 from ..authentication import oauth2
 from typing import List
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi.encoders import jsonable_encoder
 from ..utils.email_sender import send_email_notification
+from app.utils.utils import mapping, get_coordinates
 
 CURRENT_DIR = os.path.join(os.getcwd(), "uploads")
 router = APIRouter(tags=['project'])
@@ -33,8 +33,8 @@ async def upload_file(
             )
 
         
-        start_time = time.time()
-        logging.info(start_time)
+        # start_time = time.time()
+        # logging.info(start_time)
         user = db.query(models.User).filter(models.User.email == current_user.email).first()
         # # Send email notification to the system admin
         # user_email = user.email
@@ -48,10 +48,10 @@ async def upload_file(
             return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"File with the name {file_name} already exists. Try reloading a file with the different name.")
         else:
             # Send email notification to the system admin
-            user_email = user.email
-            user_name = user.username
-            send_email_notification(user_email=user_email, user_name=user_name)
-            logging.info("Email notification sent to the system admin.")
+            # user_email = user.email
+            # user_name = user.username
+            # send_email_notification(user_email=user_email, user_name=user_name)
+            # logging.info("Email notification sent to the system admin.")
             file_path:str = os.path.join(CURRENT_DIR,str(user.id), file_name, f"zip")
             img_folder = os.path.join(CURRENT_DIR, str(user.id), file_name, "images", "Project_images")
             #creating folders
@@ -60,7 +60,7 @@ async def upload_file(
             os.makedirs(img_folder, exist_ok=True)
             with open(os.path.join(file_path, file.filename), "wb") as buffer:
                 buffer.write(await file.read())
-            print("File_name = ", file.filename.split(".")[0])
+            # print("File_name = ", file.filename.split(".")[0])
             
             # doc_id = save_doc_into_db(db=db, filename=file.filename.split(".")[0] , user_id=user.id)
             # logging.info(f"Documnet Id is: {doc_id}")
@@ -75,14 +75,126 @@ async def upload_file(
             
             
             # Threaded PDF processing
-            pdf_files = os.listdir(os.path.join(CURRENT_DIR, str(user.id), file_name, "pdfs", project_name))
+            # pdf_files = os.listdir(os.path.join(CURRENT_DIR, str(user.id), file_name, "pdfs", project_name))
+            # logging.info("Starting PDF to image conversion")
+            
+            # def process_file(file):
+            #     return process_pdf(
+            #         os.path.join(CURRENT_DIR, str(user.id), file_name, "pdfs", project_name, file),
+            #         folder_path=img_folder,
+            #         project_name=file_name
+            #     )
+
+            # for file in pdf_files:
+            #     process_file(file)
+
+            # logging.info("Converted PDFs to images successfully")
+            
+            # logging.info("sending images to gpt")
+            # extracted_details = extracting_project_details(images_path=img_folder)
+            # logging.info("response: %s", extracted_details)
+            
+            # end_time = time.time()  # Record end time
+            # total_time = (end_time - start_time) / 60
+            # print("Total Time: ", total_time)
+            # logging.info(f"Total processing time: {total_time:.2f} minutes")
+            
+            # response = extracted_details.get("analysis")
+            # extracted_fields = extracted_details.get("extracted_fields")
+            
+            # print("extracted fields", extracted_fields)
+            # latitude, longitude = get_coordinates(extracted_fields.get("location_within_building_zone"))
+            # print("successully saved the data into db.")
+            # location = extract_location(extracted_fields.get("location_within_building_zone"))
+            # print(f"Location is {location}")
+            # latitude, longitude = get_coordinates(location)
+            # print(f"Latitude: {latitude}, Longitude: {longitude}")
+            doc_id = save_doc_into_db(db=db, filename=project_name , user_id=user.id)
+            # logging.info(f"Documnet Id is: {doc_id}")
+            # save_analysis_into_db(db=db, response=response, duration = total_time,  doc_id = doc_id)
+            # save_project_details_into_db(
+            #     db=db,
+            #     user_id=user.id,
+            #     document_id=doc_id,
+            #     latitude=latitude,
+            #     longitude=longitude,
+            #     **{key: extracted_fields.get(value) for key, value in mapping.items()}
+            # )
+            
+            
+            return {
+                "Project ID": doc_id,
+                "Project Name": project_name,
+                # "Location Co-ordinates": {
+                #     "Latitude": latitude,
+                #     "Longitude": longitude
+                # }
+                }
+
+    except Exception as e:
+        logging.error(f"Internal server error: {e}")
+        return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    
+@router.post('/analyze/')
+async def upload_file(
+    doc_id, project_name,
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(oauth2.get_current_user)
+):
+    
+    try:
+
+        
+        start_time = time.time()
+        logging.info(start_time)
+        user = db.query(models.User).filter(models.User.email == current_user.email).first()
+        # # Send email notification to the system admin
+        # user_email = user.email
+        # user_name = user.username
+        # send_email_notification(user_email=user_email, user_name=user_name)
+        # logging.info("Email notification sent to the system admin.")
+
+        # file_name = file.filename.split(".")[0]
+        
+        if db.query(models.ProjectDetails).filter(models.ProjectDetails.document_id == doc_id, models.ProjectDetails.user_id == user.id).first():
+            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"File with the name {project_name} already exists. Try reloading a file with the different name.")
+        else:
+            # Send email notification to the system admin
+            user_email = user.email
+            user_name = user.username
+            send_email_notification(user_email=user_email, user_name=user_name)
+            logging.info("Email notification sent to the system admin.")
+            # file_path:str = os.path.join(CURRENT_DIR,str(user.id), file_name, f"zip")
+            img_folder = os.path.join(CURRENT_DIR, str(user.id), project_name, "images", "Project_images")
+            # #creating folders
+            # os.makedirs(CURRENT_DIR,exist_ok=True)
+            # os.makedirs(file_path, exist_ok=True)
+            # os.makedirs(img_folder, exist_ok=True)
+            # with open(os.path.join(file_path, file.filename), "wb") as buffer:
+            #     buffer.write(await file.read())
+            # # print("File_name = ", file.filename.split(".")[0])
+            
+            # # doc_id = save_doc_into_db(db=db, filename=file.filename.split(".")[0] , user_id=user.id)
+            # # logging.info(f"Documnet Id is: {doc_id}")
+                
+            # logging.info("unzipping all the files")
+            # unzip_files(os.path.join(file_path, file.filename), os.path.join(CURRENT_DIR, str(user.id), file_name, "pdfs"))
+            # logging.info("unzipped done")
+            
+            # # project_name = ("".join(os.listdir(os.path.join(CURRENT_DIR,"zip")))).split(".")[0]
+            # project_name = file.filename.split(".")[0]
+            # print("zip name",project_name)
+            
+            
+            # Threaded PDF processing
+            pdf_files = os.listdir(os.path.join(CURRENT_DIR, str(user.id), project_name, "pdfs", project_name))
             logging.info("Starting PDF to image conversion")
             
             def process_file(file):
                 return process_pdf(
-                    os.path.join(CURRENT_DIR, str(user.id), file_name, "pdfs", project_name, file),
+                    os.path.join(CURRENT_DIR, str(user.id), project_name, "pdfs", project_name, file),
                     folder_path=img_folder,
-                    project_name=file_name
+                    project_name=project_name
                 )
 
             for file in pdf_files:
@@ -91,19 +203,44 @@ async def upload_file(
             logging.info("Converted PDFs to images successfully")
             
             logging.info("sending images to gpt")
-            response = extracting_project_details(images_path=img_folder)
-            logging.info("response:", response)
+            extracted_details = extracting_project_details(images_path=img_folder)
+            logging.info("response: %s", extracted_details)
             
             end_time = time.time()  # Record end time
             total_time = (end_time - start_time) / 60
             print("Total Time: ", total_time)
-            logging.info(f"Total processing time: {total_time:.2f} seconds")
+            logging.info(f"Total processing time: {total_time:.2f} minutes")
             
-            doc_id = save_doc_into_db(db=db, filename=project_name , user_id=user.id)
+            response = extracted_details.get("analysis")
+            extracted_fields = extracted_details.get("extracted_fields")
+            
+            print("extracted fields", extracted_fields)
+            latitude, longitude = get_coordinates(extracted_fields.get("location_within_building_zone"))
+            print("successully saved the data into db.")
+            location = extract_location(extracted_fields.get("location_within_building_zone"))
+            print(f"Location is {location}")
+            latitude, longitude = get_coordinates(location)
+            print(f"Latitude: {latitude}, Longitude: {longitude}")
+            # doc_id = save_doc_into_db(db=db, filename=project_name , user_id=user.id)
             # logging.info(f"Documnet Id is: {doc_id}")
             save_analysis_into_db(db=db, response=response, duration = total_time,  doc_id = doc_id)
-
-            return response
+            save_project_details_into_db(
+                db=db,
+                user_id=user.id,
+                document_id=doc_id,
+                latitude=latitude,
+                longitude=longitude,
+                **{key: extracted_fields.get(value) for key, value in mapping.items()}
+            )
+            
+            
+            return {
+                "Project Analysis Result": response,
+                "Location Co-ordinates": {
+                    "Latitude": latitude,
+                    "Longitude": longitude
+                }
+                }
 
     except Exception as e:
         logging.error(f"Internal server error: {e}")

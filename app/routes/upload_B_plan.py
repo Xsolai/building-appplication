@@ -1,10 +1,10 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException, status, Response
 from fastapi.responses import JSONResponse
-import os
+import os, json
 import logging
-from ..services.pdf_service import process_pdf, process_plan_pdf
-from ..services.file_service import save_compliance_into_db
-from ..services.openai_service import check_compliance, compliance_status, check_compliance_response
+from ..services.pdf_service import process_plan_pdf
+from ..services.file_service import save_bplan_into_db, save_bplan_details_into_db, save_cmp_details_into_db
+from ..services.openai_service import extracting_bplan_details, comparison, PdfReport
 from ..database.database import get_db
 from sqlalchemy.orm import Session
 from fastapi import Depends
@@ -14,14 +14,14 @@ from smtplib import SMTP
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib import colors
 from reportlab.lib.units import inch
-from reportlab.lib.enums import TA_CENTER
+from app.utils.utils import extract_project_details_as_string , extract_bplan_details_as_string, mapping
 
 
 CURRENT_DIR = os.path.join(os.getcwd(), "uploads")
@@ -38,6 +38,7 @@ def generate_pdf_report(report_text: str, output_path: str):
     - output_path: The file path to save the PDF report
     """
     report_text = report_text.replace(":**", "")
+    # report_text = report_text.replace("**:", "")
     # Create the PDF document
     pdf = SimpleDocTemplate(output_path, pagesize=letter, 
                             rightMargin=72, leftMargin=72, 
@@ -98,7 +99,7 @@ def generate_pdf_report(report_text: str, output_path: str):
         # Handle subheadings
         elif line.startswith('- **'):
             # Remove ** and create a bold paragraph
-            clean_line = line[4:-1]
+            clean_line = line[4:]
             story.append(Paragraph(clean_line, bold_style))
         
         # Handle bullet points
@@ -187,17 +188,16 @@ async def upload_file(
             )
         
         user = db.query(models.User).filter(models.User.email == current_user.email).first()
-        
+        if not user:
+            return JSONResponse(content={"error": "No user found"}, status_code=404)
         # Retrieve the latest project for the user
+        logging.info("Extracting project details.")
         latest_project = db.query(models.Document).filter(models.Document.user_id == user.id).order_by(models.Document.uploaded_at.desc()).first()
-        # Check if a project exists for this user
         if not latest_project:
             return JSONResponse(content={"error": "No projects found for the user"}, status_code=404)
 
         file_name = latest_project.file_name
-        print("project name: ", file_name)
-        
-        project_images = os.path.join(CURRENT_DIR, str(user.id), file_name,  "images", "Project_images")
+        logging.info(f"Extracting info for the project {file_name}.")
         file_path:str = os.path.join(CURRENT_DIR, str(user.id), file_name,  "B-plan")
         B_plan_images_path = os.path.join(file_path, "images")
         #creating folders
@@ -207,44 +207,135 @@ async def upload_file(
         saved_file_path = os.path.join(file_path, file.filename)
         with open(os.path.join(file_path, file.filename), "wb") as buffer:
             buffer.write(await file.read())
+            
+        bplan_name = file.filename.split(".")[-2]
         print("File_name = ", file.filename.split(".")[-2])
 
         result = process_plan_pdf(os.path.join(saved_file_path), folder_path= B_plan_images_path, project_name="B-plan")
-        logging.info("converted to images Done")
+        logging.info("converted BPlan pdf into images")
         
-        logging.info("sending images to gpt")
-        response = check_compliance(b_plan_Path=B_plan_images_path, images_path=project_images)
+        logging.info("sending BPlan images to gpt")
+        # response = check_compliance(b_plan_Path=B_plan_images_path, images_path=project_images)
+        extracted_details = extracting_bplan_details(db=db,b_plan_path=B_plan_images_path, user_id=user.id, doc_id=latest_project.id)
+        duration = extracted_details.get("total_time")
+        response = extracted_details.get("result")
         logging.info("response: %s", response)
         
-        cmp_response = check_compliance_response(responses=response)
+        logging.info("saving bplan info into db.")
+        bplan_id = save_bplan_into_db(db=db, user_id=user.id, bplan_name=bplan_name, doc_id=latest_project.id)
         
-        cmp_response_list = []
-        for line in cmp_response.split("\n"):
-            cmp_response_list.append(line.replace("- ", ""))
-        print("Complaince Report: ", cmp_response)
+        logging.info("saving bplan details info into db.")
+        # save_bplan_details_into_db(
+        #         db=db,
+        #         user_id=user.id,
+        #         document_id=latest_project.id,
+        #         bplan_id=bplan_id,
+        #         duration=duration,
+        #         location_within_building_zone=response.get("location_within_building_zone"),
+        #         building_use_type=response.get("building_use_type"),
+        #         building_style=response.get("building_style"),
+        #         grz=response.get("grz"),
+        #         gfz=response.get("gfz"),
+        #         building_height=response.get("building_height"),
+        #         number_of_floors=response.get("number_of_floors"),
+        #         roof_shape=response.get("roof_shape"),
+        #         dormers=response.get("dormers"),
+        #         roof_orientation=response.get("roof_orientation"),
+        #         parking_spaces=response.get("parking_spaces"),
+        #         outdoor_space=response.get("outdoor_space"),
+        #         setback_area=response.get("setback_area"),
+        #         setback_relevant_filling_work=response.get("setback_relevant_filling_work"),
+        #         deviations_from_b_plan=response.get("deviations_from_b_plan"),
+        #         exemptions_required=response.get("exemptions_required"),
+        #         species_protection_check=response.get("species_protection_check"),
+        #         compliance_with_zoning_rules=response.get("compliance_with_zoning_rules"),
+        #         compliance_with_building_codes=response.get("compliance_with_building_codes")
+        #     )
+        save_bplan_details_into_db(
+                db=db,
+                user_id=user.id,
+                document_id=latest_project.id,
+                bplan_id=bplan_id,
+                duration=duration,
+                **{key: response.get(value) for key, value in mapping.items()}
+            )
+        logging.info("saved into db.")
+        logging.info("Now, extracting project and bplan details for comparison.")
+        project_details_id, project_details = extract_project_details_as_string(db, doc_id=latest_project.id)
+        print("Project Details: \n\n", project_details)
+        bplan_details_id, bplan_details = extract_bplan_details_as_string(db, doc_id=latest_project.id, bplan_id=1)
+        print("BPlan Details: \n\n", bplan_details)
         
-        logging.info("Checking compliance status..")
-        cmp_status = compliance_status(response)
-        # print("status: ", cmp_status.split(","))
-        # details = ",".join([response for response in cmp_status.split(",")[1:]])
-        details = ", ".join([response for response in cmp_response_list])
-        # print("Details: ", details)
+        comparison_response = comparison(project_details=project_details, bplan_details=bplan_details)
+        # print("Comparison response: ", comparison_response)
+        # if "```json" in comparison_response:
+        #     comparison_response = comparison_response.replace("```json", "")
+        #     comparison_response = comparison_response.replace("```", "")
         
-        save_compliance_into_db(db=db, status=cmp_status.split(",")[0],  details=details, doc_id = latest_project.id)
-        logging.info("saved compliance status into db")
+        cleaned_response = json.loads(comparison_response)
+        print("Cleaned response: \n\n", cleaned_response)
+        # print("Status: ", cleaned_response.get("overall_status"))
+        logging.info("Saving compliance details into db.")
+        # save_cmp_details_into_db(
+        #     db=db,
+        #     user_id=user.id,
+        #     document_id=latest_project.id,
+        #     bplan_id=1,
+        #     proj_detail_id=project_details_id,
+        #     bplan_detail_id=bplan_details_id,
+        #     compliant_status=cleaned_response.get("overall_status") if cleaned_response.get("overall_status") else None,
+        #     location_within_building_zone=cleaned_response.get("location_within_building_zone") if cleaned_response.get("location_within_building_zone") else None,
+        #     building_use_type=cleaned_response.get("building_use_type") if cleaned_response.get("building_use_type") else None,
+        #     grz=cleaned_response.get("grz") if cleaned_response.get("grz") else None,
+        #     gfz=cleaned_response.get("gfz") if cleaned_response.get("gfz") else None,
+        #     building_height=cleaned_response.get("building_height") if cleaned_response.get("building_height") else None,
+        #     number_of_floors=cleaned_response.get("number_of_floors") if cleaned_response.get("number_of_floors") else None,
+        #     roof_shape=cleaned_response.get("roof_shape") if cleaned_response.get("roof_shape") else None,
+        #     dormers=cleaned_response.get("dormers") if cleaned_response.get("dormers") else None,
+        #     roof_orientation=cleaned_response.get("roof_orientation") if cleaned_response.get("roof_orientation") else None,
+        #     parking_spaces=cleaned_response.get("parking_spaces") if cleaned_response.get("parking_spaces") else None,
+        #     outdoor_space=cleaned_response.get("outdoor_space") if cleaned_response.get("outdoor_space") else None,
+        #     setback_area=cleaned_response.get("setback_area") if cleaned_response.get("setback_area") else None,
+        #     setback_relevant_filling_work=cleaned_response.get("setback_relevant_filling_work") if cleaned_response.get("setback_relevant_filling_work") else None,
+        #     deviations_from_b_plan=cleaned_response.get("deviations_from_b_plan") if cleaned_response.get("deviations_from_b_plan") else None,
+        #     exemptions_required=cleaned_response.get("exemptions_required") if cleaned_response.get("exemptions_required") else None,
+        #     species_protection_check=cleaned_response.get("species_protection_check") if cleaned_response.get("species_protection_check") else None,
+        #     compliance_with_zoning_rules=cleaned_response.get("compliance_with_zoning_rules") if cleaned_response.get("compliance_with_zoning_rules") else None,
+        #     compliance_with_building_codes=cleaned_response.get("compliance_with_building_codes") if cleaned_response.get("compliance_with_building_codes") else None,
+        # )
+        save_cmp_details_into_db(
+            db=db,
+            user_id=user.id,
+            document_id=latest_project.id,
+            bplan_id=1,
+            proj_detail_id=project_details_id,
+            bplan_detail_id=bplan_details_id,
+            compliant_status=cleaned_response.get("overall_status") if cleaned_response.get("overall_status") else None,
+            **{key: cleaned_response.get(value) for key, value in mapping.items()}
+        )
+        logging.info("saved compliance details into db.")
         
         # Generate PDF report
         report_path = os.path.join(file_path, "Compliance_Report.pdf")
-        generate_pdf_report(response, report_path)
+        response = json.dumps(cleaned_response)
+        pdf_content = PdfReport(results=response)
+        # print("PDF content: \n", pdf_content)
+        logging.info(f"generating pdf...")
+        generate_pdf_report(pdf_content, report_path)
         logging.info("PDF report generated: %s", report_path)
-
-        # Send email with the PDF report attached
-        send_email_with_report(to_email=user.email, pdf_path=report_path, user_id=user.id)
+        try:
+            # Send email with the PDF report attached
+            send_email_with_report(to_email=user.email, pdf_path=report_path, user_id=user.id)
+            logging.info("Email sent with report.")
+        except Exception as e:
+            logging.error(f"Error sending email: {e}")
+            print(f"Error sending email: {e}")
 
         return {
             "message": "Compliance report generated and sent to your email",
             "Test date": latest_project.uploaded_at,
-            "result": cmp_response_list
+            # "result": cmp_response_list
+            "result": cleaned_response
         }
 
 

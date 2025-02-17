@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from app.models.models import Voucher
 from app.utils.code_generator import generate_random_voucher_code
 
-# def create_voucher(db: Session) -> Voucher:
+# def create_single_voucher(db: Session) -> Voucher:
 #     code = generate_random_voucher_code()
 #     voucher = Voucher(code=code, is_used=False)
 #     db.add(voucher)
