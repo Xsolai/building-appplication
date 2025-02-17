@@ -103,7 +103,7 @@ const Form = () => {
       formDataToSend.append('file', file);
       formDataToSend.append('name', projectName);
   
-      const response = await fetch('https://app.saincube.com/app1/upload/', {
+      const response = await fetch('http://18.184.65.167:5000/upload/', {
         method: 'POST',
         ...getFormDataConfig(),
         body: formDataToSend,
@@ -138,7 +138,7 @@ const Form = () => {
   const handleSaveChanges = async () => {
     setLoading(true);
     try {
-      const response = await fetch('https://app.saincube.com/app1/api/update-project/', {
+      const response = await fetch('http://18.184.65.167:5000/api/update-project/', {
         method: 'PUT',
         ...getConfig(),
         body: JSON.stringify(formData)

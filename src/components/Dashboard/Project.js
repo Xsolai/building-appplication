@@ -191,7 +191,7 @@ const ProjectPage = () => {
         }
 
         // Fetch project status
-        const projectResponse = await fetch('https://app.saincube.com/app1/projects/', {
+        const projectResponse = await fetch('http://18.184.65.167:5000/projects/', {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
@@ -209,7 +209,7 @@ const ProjectPage = () => {
           setHeaderStatus(currentProject.status);
 
           // Fetch analysis data
-          const analysisResponse = await fetch(`https://app.saincube.com/app1/projects/${fileName}`, {
+          const analysisResponse = await fetch(`http://18.184.65.167:5000/projects/${fileName}`, {
             headers: {
               'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json',

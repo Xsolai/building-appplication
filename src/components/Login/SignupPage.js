@@ -77,7 +77,7 @@ const SignupPage = () => {
       
       try {
         // Update the API endpoint to match your FastAPI server
-        const response = await fetch('https://app.saincube.com/app1/auth/register', {  // Adjust the URL to match your backend
+        const response = await fetch('http://18.184.65.167:5000/auth/register', {  // Adjust the URL to match your backend
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

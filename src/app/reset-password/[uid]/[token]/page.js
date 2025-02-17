@@ -55,7 +55,7 @@ const ResetPasswordFormPage = ({ params }) => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('https://app.saincube.com/app1/auth/reset-password/', {
+      const response = await axios.post('http://18.184.65.167:5000/auth/reset-password/', {
         token: token,
         new_password: data.password,
         confirm_password: data.confirmPassword

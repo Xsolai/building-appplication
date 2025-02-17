@@ -218,7 +218,7 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
     formData.append('file', file);
 
     try {
-      const response = await fetch('https://app.saincube.com/app1/upload-B-Plan/', {
+      const response = await fetch('http://18.184.65.167:5000/upload-B-Plan/', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,

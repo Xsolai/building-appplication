@@ -107,7 +107,7 @@ const OTPVerificationPage = () => {
     setApiError('');
 
     try {
-      const response = await axios.post('https://app.saincube.com/app1/auth/verify-otp', {
+      const response = await axios.post('http://18.184.65.167:5000/auth/verify-otp', {
         email: userEmail,
         otp: otp.join(''),
       });
@@ -134,7 +134,7 @@ const OTPVerificationPage = () => {
 
     try {
       setApiError('');
-      const response = await axios.post('https://app.saincube.com/app1/auth/resend-otp', {
+      const response = await axios.post('http://18.184.65.167:5000/auth/resend-otp', {
         email: userEmail,
         otp: '000000'
       });

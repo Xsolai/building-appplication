@@ -23,7 +23,7 @@ const AppBar = () => {
       const token = localStorage.getItem('access_token');
 
       try {
-        const response = await fetch("https://app.saincube.com/app1/update-profile", {
+        const response = await fetch("http://18.184.65.167:5000/update-profile", {
           method: "GET",
           headers: {
             'Content-Type': 'application/json',
