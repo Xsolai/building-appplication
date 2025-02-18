@@ -144,8 +144,6 @@ async def upload_file(
 ):
     
     try:
-
-        
         start_time = time.time()
         logging.info(start_time)
         user = db.query(models.User).filter(models.User.email == current_user.email).first()
@@ -431,3 +429,37 @@ def update_analysis_result(
         "message": "Project details updated successfully.",
         "updated_project": project_data
     }
+    
+@router.get("/completeness-check/{doc_id}")
+def get_completeness_check(doc_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieve completeness check details for a specific application type.
+
+    Args:
+        application_type (str): The type of the application.
+        db (Session): The database session dependency.
+
+    Returns:
+        dict: The completeness check details, including required documents.
+    """
+    # Query the database for the requested application type
+    completeness_check = db.query(models.CompletenessCheckResult).filter_by(document_id=doc_id).first()
+    
+    if not completeness_check:
+        raise HTTPException(status_code=200, detail="You've not performed completeness check result.")
+
+    # Serialize the response
+    response = {
+        "application_type": completeness_check.application_type,
+        "status": completeness_check.status,
+        "required_documents": [
+            {
+                "name": doc.name,
+                "status": doc.status,
+                "action_needed": doc.action_needed
+            }
+            for doc in completeness_check.required_documents
+        ]
+    }
+
+    return response
