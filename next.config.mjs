@@ -4,7 +4,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://18.184.65.167:5000/:path*', // Proxy to Backend
+        destination: 'https://solasolution.ecomtask.de/buildingapp/:path*', // Proxy to Backend
       },
     ]
   },

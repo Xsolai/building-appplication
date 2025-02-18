@@ -3,7 +3,7 @@ import axios from 'axios';
 export default async function handler(req, res) {
   try {
     const response = await axios({
-      url: 'http://18.184.65.167:5000/upload',
+      url: 'https://solasolution.ecomtask.de/buildingapp/upload',
       method: req.method,
       headers: {
         'Content-Type': req.headers['content-type'] || 'application/json',

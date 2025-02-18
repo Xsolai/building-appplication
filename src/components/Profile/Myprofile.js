@@ -59,7 +59,7 @@ const UserProfilePage = () => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await fetch("http://18.184.65.167:5000/update-profile", {
+        const response = await fetch("https://solasolution.ecomtask.de/buildingapp/update-profile", {
           method: "GET",
           headers: {
             'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ const UserProfilePage = () => {
       setIsLoading(true);
 
       try {
-        const response = await fetch('http://18.184.65.167:5000/update-profile', {
+        const response = await fetch('https://solasolution.ecomtask.de/buildingapp/update-profile', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
