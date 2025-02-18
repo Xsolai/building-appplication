@@ -25,6 +25,7 @@ class User(Base):
     bplan_details = relationship("BPlanDetails", back_populates="user")
     bplan = relationship("BPlan", back_populates="user")
     cmp_details = relationship("ComplianceDetails", back_populates="user")
+    completeness_check = relationship("CompletenessCheckResult", back_populates="user")
 
 # Document model
 class Document(Base):
@@ -44,6 +45,7 @@ class Document(Base):
     project_details = relationship("ProjectDetails", back_populates="document")
     bplan_details = relationship("BPlanDetails", back_populates="document")
     cmp_details = relationship("ComplianceDetails", back_populates="document")
+    completeness_check = relationship("CompletenessCheckResult", back_populates="document")
 
 # AnalysisResult model with JSON field for key-value pairs
 class AnalysisResult(Base):
@@ -226,3 +228,28 @@ class ComplianceDetails(Base):
     bplan = relationship('BPlan', back_populates='cmp_details')
     project_details = relationship("ProjectDetails", back_populates="cmp_details")
     bplan_details = relationship("BPlanDetails", back_populates="cmp_details")
+    
+class CompletenessCheckResult(Base):
+    __tablename__ = "completeness_check_results"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    application_type = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    document_id = Column(Integer, ForeignKey('documents.id'), nullable=False)
+    
+    user = relationship('User', back_populates='completeness_check')
+    document = relationship('Document', back_populates='completeness_check')
+    # One-to-Many relationship with RequiredDocument
+    required_documents = relationship("RequiredDocument", back_populates="completeness_check_result", cascade="all, delete")
+
+class RequiredDocument(Base):
+    __tablename__ = "required_documents"
+
+    id = Column(Integer, primary_key=True, autoincrement=True) 
+    name = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    action_needed = Column(Text, nullable=False)
+
+    completeness_check_id = Column(Integer, ForeignKey("completeness_check_results.id"), nullable=False)
+    completeness_check_result = relationship("CompletenessCheckResult", back_populates="required_documents")

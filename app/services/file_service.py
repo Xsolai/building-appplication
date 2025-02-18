@@ -321,3 +321,48 @@ def save_cmp_details_into_db(
     db.commit()
     db.refresh(new_cmp_details)
     return new_cmp_details.id
+
+
+def add_completeness_check_result(db, application_type: str, status: str, required_documents: list, doc_id: int, user_id:int):
+    """
+    Add a completeness check result with dynamic data.
+
+    Args:
+        db: The database session.
+        application_type (str): The application type.
+        status (str): The overall status of the completeness check.
+        required_documents (list): A list of dictionaries where each dictionary represents a required document 
+                                   with keys 'name', 'status', and 'action_needed'.
+
+    Example of `required_documents`:
+        [
+            {"name": "Application Form", "status": "Not mentioned", "action_needed": "Ensure it is submitted."},
+            {"name": "Building/Business Description Form", "status": "Not mentioned", "action_needed": "Ensure it is submitted."},
+            {"name": "Excerpt from the Cadastral Map", "status": "Mentioned as provided", "action_needed": "✔ Present"}
+        ]
+    """
+    try:
+        # Create a CompletenessCheckResult instance
+        completeness_check = models.CompletenessCheckResult(
+            application_type=application_type,
+            status=status,
+            user_id=user_id,
+            document_id=doc_id
+        )
+        
+        # Add required documents dynamically
+        for doc in required_documents:
+            required_document = models.RequiredDocument(
+                name=doc["name"],
+                status=doc["status"],
+                action_needed=doc["action_needed"]
+            )
+            completeness_check.required_documents.append(required_document)
+        
+        db.add(completeness_check)
+        db.commit()
+        return {"message": "Completeness check result added successfully."}
+    
+    except Exception as e:
+        db.rollback()
+        raise Exception(f"Failed to add completeness check result: {str(e)}")

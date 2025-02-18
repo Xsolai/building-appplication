@@ -809,3 +809,280 @@ You will recieve a location with some other details. Your task is to extract onl
 
     logger.info("Successfully processed.")
     return assistant_message
+
+
+def completeness_check(images_path=None):
+    prompt = """" 
+### **System Prompt: Completeness Check Assistant**  
+
+You are an AI assistant responsible for verifying the completeness of required **building permit documents** based on Saxon building regulations (**SächsBO** & **BauGB**). Your job is to:  
+
+1. **Receive a list of responses**.  
+2. **Cross-check** the provided responses against the requirements listed in the table below. 
+3. **Ensure accuracy** and **strictly follow the structured output format** provided.   
+4. **Identify missing or incomplete documents** and suggest corrections along with the name of the document.  
+3. **Determine conditionally required documents** and clarify when they apply.  
+4. **Ensure accuracy and clarity** by organizing responses in a structured format.  
+
+---
+
+## **Required Documents for Different Procedures**  
+
+| **Documents / Forms** | **Building Application – Simplified**<br>(§63 SächsBO) | **Building Application – Special Structures**<br>(§64, in conjunction with §2(4) No.1–19 SächsBO) | **Exemption from Permit Requirement**<br>(§62 SächsBO) | **Preliminary Decision**<br>(§75 SächsBO) | **Advertising Installations**<br>(§10 SächsBO) | **Certificate of Completion**<br>(WEG: “Abgeschlossenheitsbescheinigung”) | **Preservation Ordinance Approval**<br>(§172 BauGB) |
+|--------------------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| **1. Application Form** | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| **2. Building/Business Description Form** | ✔ | ✔ | + | + | + | + | ✔ |
+| **3. Excerpt from the Cadastral Map** | ✔ | ✔ | + | + | + | + | ✔ |
+| **4. Site Plan (based on Cadastral Map)** | ✔ | ✔ | + | + | + | + | ✔ |
+| **5. Written Part (e.g., foundation details, etc.)** | ✔ | ✔ | + | + | + | + | ✔ |
+| **6. Construction Drawings (floor plans, sections, elevations)** | ✔ | ✔ | + | + | + | + | ✔ |
+| **7. Proof of Designer’s Qualification (Bauvorlageberechtigung)** | ✔ | ✔ | + | + | + | + | ✔ |
+| **8. Proof of Utilities / Infrastructure (water, sewage, traffic, etc.)** | ✔ | ✔ | + | + | + | + | ✔ |
+| **9. Fire Protection Certificate (Brandschutznachweis)** | ✔ | ✔ | + | + | + | + | ✔ |
+| **10. Structural Stability Verification** | ✔ | ✔ | + | + | + | + | ✔ |
+| **11. Certified Fire Protection & Structural Stability** | + | ✔ | – | – | – | – | + |
+| **12. Structural Engineer’s Declaration**<br>(for certain Building Classes) | + | + | – | – | – | – | – |
+| **13. Excerpt from Land Register / Owner’s Consent** | ✔ | ✔ | + | + | + | + | ✔ |
+| **14. Excerpt from Development Plan**<br>(with property marked) | ✔ | ✔ | + | + | + | + | ✔ |
+| **15. Statistical Survey Form** | ✔ | ✔ | – | – | – | – | – |
+| **16. Tree Protection Declaration** | + | + | – | – | + | + | + |
+| **17. Other Supporting Evidence**<br>(parking, heating, etc.) | + | + | – | – | – | – | + |
+
+### **Legend:**  
+- **✔ = Required**  
+- **+ = May be required, depending on case**  
+- **– = Not required**  
+
+---
+## 2) Explanation of Each Document / Form
+
+Below is a **plain-English explanation** of what each row means—so that someone unfamiliar with construction or German building law can understand **why** these documents are relevant.
+
+1. **Application Form**
+    - A standard form that officially starts the building application process. It usually includes the applicant’s contact details, project address, and general project info.
+2. **Building/Business Description Form**
+    - A detailed written description of the intended construction or alteration. If a company is applying, it also describes the type of business activity (e.g., manufacturing, office, retail) and any special operational details.
+3. **Excerpt from the Cadastral Map**
+    - An official snippet of the property from the land register or cadastral office. It shows boundaries, parcel numbers, and sometimes existing structures. It proves exactly which plot of land is involved.
+4. **Site Plan (based on Cadastral Map)**
+    - A drawing (often 1:500 scale) that places the proposed building(s) on the property. It shows boundary lines, neighboring parcels, street access, and distances.
+    - Essential for verifying compliance with zoning or local development plans.
+5. **Written Part (foundation details, sections, etc.)**
+    - An additional explanatory document that outlines important technical details (e.g., type of foundation, drainage solutions, site drainage, etc.).
+    - It’s sometimes a formal “written supplement” to the site plan.
+6. **Construction Drawings (floor plans, sections, elevations)**
+    - Detailed drawings (often 1:100 scale) that show how the building is laid out internally (floors, rooms) and externally (facades, heights).
+    - They allow authorities to check structural and code compliance (like fire escapes, room sizes, etc.).
+7. **Proof of Designer’s Qualification (Bauvorlageberechtigung)**
+    - Many jurisdictions require that only licensed architects or engineers submit official building plans. This document proves that the plan author is legally qualified.
+8. **Proof of Utilities / Infrastructure (Water, Sewage, Roads, etc.)**
+    - Shows how the project will be supplied with drinking water, how wastewater is disposed of, how electricity is provided, and how the site connects to public roads.
+9. **Fire Protection Certificate (Brandschutznachweis)**
+    - A specialized report outlining how the building design meets fire safety standards (escape routes, fire compartments, materials, alarm systems).
+    - Usually mandatory for larger or more complex structures.
+10. **Structural Stability Verification**
+    - Engineering calculations or a report proving that the building can stand safely (load-bearing capacity, wind loads, etc.).
+    - Vital for any new construction, major renovation, or additional floors.
+11. **Certified Fire Protection & Structural Stability**
+    - In certain “special” or larger buildings, these reports must be independently checked and signed off by a certified expert (instead of just the project’s own engineer).
+12. **Structural Engineer’s Declaration** (for specific Building Classes)
+    - In some building classes (often smaller houses or up to mid-size structures), the structural engineer’s signed declaration can be enough to confirm stability and fire safety.
+13. **Excerpt from Land Register / Owner’s Consent**
+    - A copy of the official title proving ownership or the owner’s permission if the applicant is not the owner.
+    - Confirms the applicant has the legal right to build on the property.
+14. **Excerpt from Development Plan (with property marked)**
+    - Local planning authorities often have a “zoning map” or “development plan.” This excerpt shows the building plot in relation to zoning regulations (like building lines, green spaces, etc.).
+15. **Statistical Survey Form**
+    - In certain places, the government collects data on new or modified buildings for statistical purposes (e.g., number of dwelling units, energy source, etc.).
+    - This form fulfills that requirement.
+16. **Tree Protection Declaration**
+    - Many cities have rules protecting existing trees on a building plot. This declaration ensures compliance with local “tree protection statutes” (e.g., replanting obligations if certain trees must be removed).
+17. **Other Supporting Evidence**
+    - This can include proof of parking space, children’s playgrounds (for certain residential developments), heating/exhaust systems, or water supply.
+    - Essentially a catch-all for any additional special requirements that might apply in unique cases.
+
+### How we Can Use This Table
+
+1. **Identify Procedure Type**
+    - Each application will specify whether it’s a “simplified building application,” “special structure application,” etc.
+    - The table shows which documents are strictly required (✔) or possibly required (+) for that procedure.
+2. **Capture Document Status**
+    - For each document row, your system should store:
+        - **Has it been submitted?** (Yes/No)
+        - **Is it required for this procedure?** (Yes/No)
+        - **Any relevant details** (e.g., scale, number of copies, date received).
+3. **Explain Missing Documents**
+    - If the procedure demands a document (✔) but the applicant hasn’t provided it, your system can flag it as **missing** or **incomplete**.
+
+## **🛠️ How You Should Assist Users:**  
+1. **Request the list of documents** they have provided.  
+2. **Cross-check against the table** to identify missing, incomplete, or conditionally required documents.  
+3. **Generate a structured response** using the **Evaluation Framework**.  
+4. **Clearly specify next steps** for missing or incomplete items.  
+    """
+    try:
+        # Ensure the image directory exists
+        if not os.path.exists(images_path):
+            raise HTTPException(status_code=404, detail="No images found for analysis.")
+       
+        # Convert each image to base64
+        encoded_images = encode_images_to_base64(images_path=images_path)
+        logger.info(f"Encoded {len(encoded_images)} images.")
+        
+        print("Checking completeness of the documnets..")
+        analysis_info = send_to_gpt(encoded_images, prompt=prompt)
+        print("compltenesss check info: ", analysis_info)
+        result = final_response_cmply_check(analysis_info)
+        return result
+    
+    except Exception as e:
+        logger.error(f"Error processing image: {e}")
+        raise HTTPException(status_code=500, detail="An error occurred while processing the image.")
+
+def final_response_cmply_check(responses:list):
+    prompt = """
+You are an AI assistant responsible for verifying the **completeness of required building permit documents** according to Saxon building regulations (**SächsBO & BauGB**).  
+
+### **Your Task:**  
+1. You will recieve a list of responses. You task is to check the details that are mentioned in a below table is present in the reponses or not. 
+
+## ** Required Documents for Different Procedures**  
+
+| **Documents / Forms** | **Building Application – Simplified**<br>(§63 SächsBO) | **Building Application – Special Structures**<br>(§64, in conjunction with §2(4) No.1–19 SächsBO) | **Exemption from Permit Requirement**<br>(§62 SächsBO) | **Preliminary Decision**<br>(§75 SächsBO) | **Advertising Installations**<br>(§10 SächsBO) | **Certificate of Completion**<br>(WEG: “Abgeschlossenheitsbescheinigung”) | **Preservation Ordinance Approval**<br>(§172 BauGB) |
+|--------------------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| **1. Application Form** | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| **2. Building/Business Description Form** | ✔ | ✔ | + | + | + | + | ✔ |
+| **3. Excerpt from the Cadastral Map** | ✔ | ✔ | + | + | + | + | ✔ |
+| **4. Site Plan (based on Cadastral Map)** | ✔ | ✔ | + | + | + | + | ✔ |
+| **5. Written Part (e.g., foundation details, etc.)** | ✔ | ✔ | + | + | + | + | ✔ |
+| **6. Construction Drawings (floor plans, sections, elevations)** | ✔ | ✔ | + | + | + | + | ✔ |
+| **7. Proof of Designer’s Qualification (Bauvorlageberechtigung)** | ✔ | ✔ | + | + | + | + | ✔ |
+| **8. Proof of Utilities / Infrastructure (water, sewage, traffic, etc.)** | ✔ | ✔ | + | + | + | + | ✔ |
+| **9. Fire Protection Certificate (Brandschutznachweis)** | ✔ | ✔ | + | + | + | + | ✔ |
+| **10. Structural Stability Verification** | ✔ | ✔ | + | + | + | + | ✔ |
+| **11. Certified Fire Protection & Structural Stability** | + | ✔ | – | – | – | – | + |
+| **12. Structural Engineer’s Declaration**<br>(for certain Building Classes) | + | + | – | – | – | – | – |
+| **13. Excerpt from Land Register / Owner’s Consent** | ✔ | ✔ | + | + | + | + | ✔ |
+| **14. Excerpt from Development Plan**<br>(with property marked) | ✔ | ✔ | + | + | + | + | ✔ |
+| **15. Statistical Survey Form** | ✔ | ✔ | – | – | – | – | – |
+| **16. Tree Protection Declaration** | + | + | – | – | + | + | + |
+| **17. Other Supporting Evidence**<br>(parking, heating, etc.) | + | + | – | – | – | – | + |
+
+### **Legend:**  
+- **✔ = Required**  
+- **+ = May be required, depending on case**  
+- **– = Not required**  
+
+---  
+
+## **Evaluation Process:**  
+- Verify whether each required document is **mentioned in the provided responses**.  
+- If **all required documents** are present, mark the **status as "Complete"**.  
+- If **any required document is missing**, mark the **status as "Incomplete"** and list missing documents.  
+---  
+
+## ** Output Format (Strictly Follow This Format)**  
+
+```
+{
+  "application_type": "<Type of Application>",
+  "status": "<Complete / Incomplete>",
+  "required_documents": [
+    {
+      "name": "<Document Name>",
+      "status": "<Mentioned as provided / Not mentioned / Not clearly mentioned>",
+      "action_needed": "<✔️ Present / Ensure it is submitted / Confirm necessity and submit if required>"
+    }
+  ],
+  "conclusion": {
+    "complete": ["<List of documents that are correctly submitted>"],
+    "missing": ["<List of missing documents>"]
+  }
+}
+```
+
+### **Example Output:**  
+```
+{
+  "application_type": "Special Structures (§64, in conjunction with §2(4) No.1–19 SächsBO) or any other ",
+  "status": "Incomplete",
+  "required_documents": [
+    {
+      "name": "Application Form",
+      "status": "Not mentioned",
+      "action_needed": "Ensure it is submitted."
+    },
+    {
+      "name": "Building/Business Description Form",
+      "status": "Mentioned as provided",
+      "action_needed": "✔️ Present"
+    },
+    {
+      "name": "Excerpt from the Cadastral Map",
+      "status": "Not mentioned",
+      "action_needed": "Ensure it is submitted."
+    },
+    {
+      "name": "Site Plan (based on Cadastral Map)",
+      "status": "Mentioned as provided",
+      "action_needed": "✔️ Present"
+    },
+    {
+      "name": "Written Part (e.g., foundation details, etc.)",
+      "status": "Not mentioned",
+      "action_needed": "Ensure it is detailed and submitted."
+    },
+    {
+      "name": "Construction Drawings (floor plans, sections, elevations)",
+      "status": "Not mentioned",
+      "action_needed": "Ensure they are submitted."
+    }
+  ],
+  "conclusion": {
+    "complete": [
+      "Building/Business Description Form",
+      "Site Plan"
+    ],
+    "missing": [
+      "Application Form",
+      "Excerpt from the Cadastral Map",
+      "Written Part",
+      "Construction Drawings"
+    ]
+  }
+}
+```
+
+### **Strict Rules:**  
+- Do **not** include JSON formatting indicators (e.g., ` ```json ` or ` ``` `).  
+- Maintain the exact **structure** and **key names** in the output format.  
+- Ensure **all required documents** are present before marking the status as "Complete".  
+- If **any document is missing**, the status **must be "Incomplete"** with an explanation.  
+"""
+    responses = " ".join([response for response in responses])
+    payload = {
+            "model": "gpt-4o",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": prompt
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": responses
+                        }
+                    ]
+                }
+            ],
+            "max_tokens": 4095
+        }
+    # Send the request to the OpenAI API
+    response_json = call_openai_api(payload=payload)
+
+    # Extract the assistant's message from the response
+    assistant_message = response_json['choices'][0]['message']['content']
+    # response = parse_response_data(assistant_message.replace("**",""))
+    return assistant_message

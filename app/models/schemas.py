@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, validator, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
@@ -142,3 +142,20 @@ class Results(BaseModel):
     non_compliant_details: Optional[str] = None  # Optional with default value None
     completed: Optional[str] = None
     pending: Optional[float] = None
+    
+class ResultData(BaseModel):
+    Project_title: str = Field(..., alias="Project title")
+    Project_location: str = Field(..., alias=" Project location")
+    Client_Applicant: str = Field(..., alias=" Client/Applicant")
+    Project_type: str = Field(..., alias=" Project type")
+    Building_class: str = Field(..., alias=" Building class")
+    Building_usage: str = Field(..., alias=" Building usage")
+    Number_of_floors: str = Field(..., alias=" Number of floors")
+    Gross_floor_area: str = Field(..., alias=" Gross floor area")
+    Volume_of_the_building: str = Field(..., alias=" Volume of the building")
+    Technical_Data: str = Field(..., alias=" Technical Data")
+    Relevant_authorities: str = Field(..., alias=" Relevant authorities")
+
+class UpdateAnalysisResult(BaseModel):
+    result_data: ResultData
+    duration: Optional[float] = None
