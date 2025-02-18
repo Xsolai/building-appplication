@@ -222,7 +222,6 @@ export default function Dashboard() {
         }
 
         const data = await response.json();
-        console.log(data);
         setProjects(data);
       } catch (err) {
         setError(err.message);

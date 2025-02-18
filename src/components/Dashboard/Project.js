@@ -94,7 +94,7 @@ const unitImages = {
   'Statik': XLogo.src,
 };
 
-const UnitCard = ({ analysisData, title, status, timestamp, locked = false }) => {
+const UnitCard = ({ analysisData, title, status, timestamp, locked = false, projectTitle, projectID }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const styles = getStatusStyles()(status);
   const StatusIcon = styles.icon;
@@ -140,6 +140,8 @@ const UnitCard = ({ analysisData, title, status, timestamp, locked = false }) =>
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           analysisData={analysisData}
+          projectName={projectTitle}
+          projectID={projectID}
         />
       )}
 
@@ -167,15 +169,17 @@ const ProjectPage = () => {
 
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [hasStatusChanged, setHasStatusChanged] = useState(false);
+  const [currentProjectTitle, setCurrentProjectTitle] = useState(null);
+  const [currentProjectID, setCurrentProjectID] = useState(null);
 
 
-    // Add this effect to detect status changes
-    useEffect(() => {
-      if (analysisData?.compliance_status && 
-          ['genehmigt', 'abgelehnt'].includes(analysisData.compliance_status)) {
-        setHasStatusChanged(true);
-      }
-    }, [analysisData?.compliance_status]);
+  // Add this effect to detect status changes
+  useEffect(() => {
+    if (analysisData?.compliance_status && 
+        ['genehmigt', 'abgelehnt'].includes(analysisData.compliance_status)) {
+      setHasStatusChanged(true);
+    }
+  }, [analysisData?.compliance_status]);
     
   useEffect(() => {
     // Extract file_name from the pathname
@@ -204,8 +208,11 @@ const ProjectPage = () => {
 
         const projects = await projectResponse.json();
         const currentProject = projects.find(project => project.file_name === fileName);
+        const projectIndex = projects.findIndex(project => project.file_name === fileName);
 
         if (currentProject) {
+          setCurrentProjectTitle(currentProject.file_name);
+          setCurrentProjectID(projectIndex + 1);
           setHeaderStatus(currentProject.status);
 
           // Fetch analysis data
@@ -324,6 +331,8 @@ const ProjectPage = () => {
             timestamp={unit.timestamp}
             locked={unit.locked}
             analysisData={analysisData}
+            projectName={currentProjectTitle}
+            projectID={currentProjectID}
           />
         ))}
       </div>
