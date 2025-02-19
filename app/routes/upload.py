@@ -370,9 +370,7 @@ async def cmplt_check(
         
         end_time = time.time() 
 
-        return {
-            "Completeness Check Result": final_result
-        }
+        return final_result
 
     except Exception as e:
         logging.error(f"Internal server error: {e}")
