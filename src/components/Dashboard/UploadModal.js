@@ -90,7 +90,7 @@ const VollstandigkeitForm = ({ isOpen, onClose, analysisData, projectTitle, proj
 
   const fetchCompletenessCheck = async () => {
     try {
-      const response = await fetch(`https://solasolution.ecomtask.de/building-app/completeness-check/${projectID}`, {
+      const response = await fetch(`https://solasolution.ecomtask.de/buildingapp/completeness-check/${projectID}`, {
         method: 'GET',
         headers: {
           'accept': 'application/json',
@@ -153,7 +153,7 @@ const VollstandigkeitForm = ({ isOpen, onClose, analysisData, projectTitle, proj
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://solasolution.ecomtask.de/building-app/completeness-check/?doc_id=${projectID}&project_name=${projectTitle}`,
+        `https://solasolution.ecomtask.de/buildingapp/completeness-check/?doc_id=${projectID}&project_name=${projectTitle}`,
         {
           method: 'POST',
           headers: {

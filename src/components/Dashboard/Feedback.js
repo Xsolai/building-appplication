@@ -41,7 +41,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
     setError(null);
 
     try {
-      const response = await fetch('https://solasolution.ecomtask.de/building-app/save-feedback/', {
+      const response = await fetch('https://solasolution.ecomtask.de/buildingapp/save-feedback/', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,

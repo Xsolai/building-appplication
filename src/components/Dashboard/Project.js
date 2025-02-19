@@ -197,7 +197,7 @@ const ProjectPage = () => {
         }
 
         // Fetch project status
-        const projectResponse = await fetch('https://solasolution.ecomtask.de/building-app/projects/', {
+        const projectResponse = await fetch('https://solasolution.ecomtask.de/buildingapp/projects/', {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
@@ -218,7 +218,7 @@ const ProjectPage = () => {
           setHeaderStatus(currentProject.status);
 
           // Fetch analysis data
-          const analysisResponse = await fetch(`https://solasolution.ecomtask.de/building-app/projects/${fileName}`, {
+          const analysisResponse = await fetch(`https://solasolution.ecomtask.de/buildingapp/projects/${fileName}`, {
             headers: {
               'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
@@ -255,7 +255,7 @@ const ProjectPage = () => {
     try {
       setIsLoading(true); // Start loading
       const response = await fetch(
-        `https://solasolution.ecomtask.de/building-app/analyze/?doc_id=${currentProjectID}&project_name=${currentProjectTitle}`,
+        `https://solasolution.ecomtask.de/buildingapp/analyze/?doc_id=${currentProjectID}&project_name=${currentProjectTitle}`,
         {
           method: 'POST',
           headers: {

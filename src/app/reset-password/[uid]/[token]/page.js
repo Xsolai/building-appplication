@@ -55,7 +55,7 @@ const ResetPasswordFormPage = ({ params }) => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('https://solasolution.ecomtask.de/building-app/auth/reset-password/', {
+      const response = await axios.post('https://solasolution.ecomtask.de/buildingapp/auth/reset-password/', {
         token: token,
         new_password: data.password,
         confirm_password: data.confirmPassword

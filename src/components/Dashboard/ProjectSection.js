@@ -103,7 +103,7 @@ const Form = () => {
       formDataToSend.append('file', file);
       formDataToSend.append('name', projectName);
   
-      const response = await fetch('https://solasolution.ecomtask.de/building-app/upload/', {
+      const response = await fetch('https://solasolution.ecomtask.de/buildingapp/upload/', {
         method: 'POST',
         ...getFormDataConfig(),
         body: formDataToSend,
@@ -138,7 +138,7 @@ const Form = () => {
   const handleSaveChanges = async () => {
     setLoading(true);
     try {
-      const response = await fetch('https://solasolution.ecomtask.de/building-app/api/update-project/', {
+      const response = await fetch('https://solasolution.ecomtask.de/buildingapp/api/update-project/', {
         method: 'PUT',
         ...getConfig(),
         body: JSON.stringify(formData)

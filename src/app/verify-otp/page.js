@@ -107,7 +107,7 @@ const OTPVerificationPage = () => {
     setApiError('');
 
     try {
-      const response = await axios.post('https://solasolution.ecomtask.de/building-app/auth/verify-otp', {
+      const response = await axios.post('https://solasolution.ecomtask.de/buildingapp/auth/verify-otp', {
         email: userEmail,
         otp: otp.join(''),
       });
@@ -134,7 +134,7 @@ const OTPVerificationPage = () => {
 
     try {
       setApiError('');
-      const response = await axios.post('https://solasolution.ecomtask.de/building-app/auth/resend-otp', {
+      const response = await axios.post('https://solasolution.ecomtask.de/buildingapp/auth/resend-otp', {
         email: userEmail,
         otp: '000000'
       });

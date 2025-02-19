@@ -25,7 +25,7 @@ const ResetPasswordPage = () => {
     setApiError("");
     
     try {
-      const response = await axios.post('https://solasolution.ecomtask.de/building-app/auth/forget-password/', {
+      const response = await axios.post('https://solasolution.ecomtask.de/buildingapp/auth/forget-password/', {
         email: data.email
       });
 

@@ -226,7 +226,7 @@ const BPlanModal = ({ isOpen, onClose, analysisData, currentProjectID }) => {
     formData.append('file', file);
 
     try {
-      const response = await fetch(`https://solasolution.ecomtask.de/building-app/upload-B-Plan/?project_id=${currentProjectID}`, {
+      const response = await fetch(`https://solasolution.ecomtask.de/buildingapp/upload-B-Plan/?project_id=${currentProjectID}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,

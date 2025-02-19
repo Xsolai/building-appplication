@@ -38,7 +38,7 @@ const ForgotEmailPage = () => {
       setApiError('');
 
       try {
-        const response = await fetch('https://solasolution.ecomtask.de/building-app/forgot-email', {
+        const response = await fetch('https://solasolution.ecomtask.de/buildingapp/forgot-email', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
