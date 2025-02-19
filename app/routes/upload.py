@@ -451,13 +451,13 @@ def get_completeness_check(doc_id: int, db: Session = Depends(get_db)):
         "application_type": completeness_check.application_type,
         "status": completeness_check.status,
         "required_documents": {
-            doc.id: {
-                "name": doc.name,
+            doc.name: {
                 "status": doc.status,
                 "action_needed": doc.action_needed
             }
             for doc in completeness_check.required_documents
         }
     }
+
 
     return response
