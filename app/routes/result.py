@@ -70,8 +70,8 @@ def show(file_name: str, db: Session = Depends(get_db), current_user: schemas.Us
 
     analysis_results = db.query(models.AnalysisResult).filter(
         models.AnalysisResult.document_id == document.id).first()
-    compliance_status = db.query(models.ComplianceStatus).filter(
-        models.ComplianceStatus.document_id == document.id).order_by(models.ComplianceStatus.id.desc()).first()
+    compliance_status = db.query(models.ComplianceDetails).filter(
+        models.ComplianceDetails.document_id == document.id).order_by(models.ComplianceDetails.id.desc()).first()
     project_details = db.query(models.ProjectDetails).filter(
         models.ProjectDetails.document_id == document.id).order_by(models.ProjectDetails.id.desc()).first()
 
@@ -91,25 +91,37 @@ def show(file_name: str, db: Session = Depends(get_db), current_user: schemas.Us
     duration = analysis_result_data.get("duration")
     analysis_result_data.pop("duration")
 
-    if compliance_status:
-        results = {
-            "completed": document.uploaded_at,
-            "pending": round(duration, 2),
-            "compliance_status": compliance_status.status,
-            "analysis_result": analysis_result_data,
-            "non_compliant_details": compliance_status.details,
-            "latitue": project_details.latitude,
-            "longitude": project_details.longitude
-        }
-    else:
-        results = {
-            "completed": document.uploaded_at,
-            "pending": round(duration, 2), 
-            "compliance_status": None,
-            "analysis_result": analysis_result_data,
-            "non_compliant_details": None,
-            "latitue": project_details.latitude,
-            "longitude": project_details.longitude
-        }
+    compliance_details_data = {
+        "compliant_status": compliance_status.compliant_status if compliance_status else None,
+        "location_within_building_zone": compliance_status.location_within_building_zone if compliance_status else None,
+        "building_use_type": compliance_status.building_use_type if compliance_status else None,
+        "building_style": compliance_status.building_style if compliance_status else None,
+        "grz": compliance_status.grz if compliance_status else None,
+        "gfz": compliance_status.gfz if compliance_status else None,
+        "building_height": compliance_status.building_height if compliance_status else None,
+        "number_of_floors": compliance_status.number_of_floors if compliance_status else None,
+        "roof_shape": compliance_status.roof_shape if compliance_status else None,
+        "dormers": compliance_status.dormers if compliance_status else None,
+        "roof_orientation": compliance_status.roof_orientation if compliance_status else None,
+        "parking_spaces": compliance_status.parking_spaces if compliance_status else None,
+        "outdoor_space": compliance_status.outdoor_space if compliance_status else None,
+        "setback_area": compliance_status.setback_area if compliance_status else None,
+        "setback_relevant_filling_work": compliance_status.setback_relevant_filling_work if compliance_status else None,
+        "deviations_from_b_plan": compliance_status.deviations_from_b_plan if compliance_status else None,
+        "exemptions_required": compliance_status.exemptions_required if compliance_status else None,
+        "species_protection_check": compliance_status.species_protection_check if compliance_status else None,
+        "compliance_with_zoning_rules": compliance_status.compliance_with_zoning_rules if compliance_status else None,
+        "compliance_with_building_codes": compliance_status.compliance_with_building_codes if compliance_status else None
+    }
+
+    results = {
+        "completed": document.uploaded_at,
+        "duration": round(duration, 2) if duration else None,
+        "compliance_status": compliance_details_data,
+        "analysis_result": analysis_result_data,
+        # "non_compliant_details": compliance_status.details if compliance_status else None,
+        "latitude": project_details.latitude if project_details else None,
+        "longitude": project_details.longitude if project_details else None
+    }
 
     return results

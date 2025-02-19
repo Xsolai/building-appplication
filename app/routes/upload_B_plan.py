@@ -175,6 +175,7 @@ def send_email_with_report(to_email: str, pdf_path: str, user_id: int):
 
 @router.post('/upload-B-Plan/')
 async def upload_file(
+    project_id:int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: schemas.User = Depends(oauth2.get_current_user)
@@ -192,7 +193,7 @@ async def upload_file(
             return JSONResponse(content={"error": "No user found"}, status_code=404)
         # Retrieve the latest project for the user
         logging.info("Extracting project details.")
-        latest_project = db.query(models.Document).filter(models.Document.user_id == user.id).order_by(models.Document.uploaded_at.desc()).first()
+        latest_project = db.query(models.Document).filter(models.Document.user_id == user.id, models.Document.id == project_id).first()
         if not latest_project:
             return JSONResponse(content={"error": "No projects found for the user"}, status_code=404)
 
