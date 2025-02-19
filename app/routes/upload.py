@@ -354,13 +354,13 @@ async def cmplt_check(
         final_result = {
             "application_type": result_dict.get("application_type"),
             "status": result_dict.get("status"),
-            "required_documents": {
+            "required_documents": [
                 doc["name"]: {
                     "status": doc["status"],
                     "action_needed": doc["action_needed"]
                 }
                 for doc in result_dict.get("required_documents", [])
-            }
+            ]
         }
         add_completeness_check_result(db, result_dict.get("application_type")
                                       , result_dict.get("status"),
