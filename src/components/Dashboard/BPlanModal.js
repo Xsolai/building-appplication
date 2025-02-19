@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import Location from "@/assests/images/location.png";
 import DragDropUploadPDF from '../common/DragDropUploadPDF';
 import UploadProgress from '../common/UploadProgress';
+import VoucherPopup from './Voucher';
 
 // Skeleton component for the map
 const MapSkeleton = () => (
@@ -78,7 +79,7 @@ const MapComponent = dynamic(
   }
 );
 
-const BPlanModal = ({ isOpen, onClose, analysisData }) => {
+const BPlanModal = ({ isOpen, onClose, analysisData, currentProjectID }) => {
   const [file, setFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -99,6 +100,8 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
   const abortController = useRef(new AbortController());
   const [location, setLocation] = useState([50.9944, 9.9917]);
   const [nonCompliantDetails, setNonCompliantDetails] = useState(null);
+  const [showVoucherPopup, setShowVoucherPopup] = useState(false);
+  const [isVoucherVerified, setIsVoucherVerified] = useState(false);
   
   useEffect(() => {
     const fetchCoordinates = async () => {
@@ -128,8 +131,8 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
   }, [isOpen, analysisData]);
 
   useEffect(() => {
-    if (analysisData?.compliance_status) {
-      const newView = ["abgelehnt", "genehmigt"].includes(analysisData.compliance_status)
+    if (analysisData?.compliance_status?.compliant_status) {
+      const newView = ["abgelehnt", "genehmigt"].includes(analysisData.compliance_status.compliant_status)
         ? "result"
         : "initial";
       setView(newView);
@@ -198,15 +201,20 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
 
   const getBPlanStatus = () => {
     // Default to abgelehnt if status is not genehmigt
-    return statusConfig[analysisData?.compliance_status === 'genehmigt' ? 'genehmigt' : 'abgelehnt'];
+    return statusConfig[analysisData?.compliance_status?.compliant_status === 'genehmigt' ? 'genehmigt' : 'abgelehnt'];
   };
 
   useEffect(() => {
-    if (analysisData?.compliance_status) {
+    if (analysisData?.compliance_status?.compliant_status) {
       // Only allow view change if status is either genehmigt or abgelehnt
       setView("result");
     }
   }, [analysisData]);
+
+  const handleVoucherSuccess = () => {
+    setIsVoucherVerified(true);
+    handleProcess(); // Proceed with action after voucher verification
+  };
 
   const handleProcess = async () => {
     if (!file) return;
@@ -218,7 +226,7 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
     formData.append('file', file);
 
     try {
-      const response = await fetch('https://solasolution.ecomtask.de/buildingapp/upload-B-Plan/', {
+      const response = await fetch(`https://solasolution.ecomtask.de/buildingapp/upload-B-Plan/?project_id=${currentProjectID}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -234,12 +242,31 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
 
       const data = await response.json();
 
-      console.log(data);
+      console.log("here", data);
 
-      setNonCompliantDetails(data.result.join(", "));
+      const aggregateIssues = (complianceData) => {
+        // Check if complianceData is valid before processing it.
+        if (!complianceData) return [];
+        let issues = [];
+        Object.values(complianceData).forEach((item) => {
+          if (item && item.issues && item.issues !== "no any") {
+            if (Array.isArray(item.issues)) {
+              issues.push(...item.issues);
+            } else {
+              issues.push(item.issues);
+            }
+          }
+        });
+        return issues;
+      };      
+      
+      // In your handleProcess function, replace the line that sets nonCompliantDetails:
+      const issuesArray = aggregateIssues(data.result);
+      setNonCompliantDetails(issuesArray.join(" | "));
       
       // Ensure compliance_status is either genehmigt or abgelehnt
-      data.compliance_status = data.compliance_status === 'genehmigt' ? 'genehmigt' : 'abgelehnt';
+      let overallCompliance = data.result.overall_status === 'non_compliant' ? 'abgelehnt' : 'genehmigt';
+      data.compliance_status = { compliant_status: overallCompliance };
       
       const resultData = data.analysis_result?.result_data || {};
 
@@ -265,6 +292,7 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
         console.log("Fetch aborted");
       } else {
         setError(err.message || "Ein Fehler ist aufgetreten");
+        console.error(err);
       }
     } finally {
       setIsLoading(false);
@@ -317,7 +345,7 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
                 )}
               </div>
               <button
-                onClick={handleProcess}
+                onClick={() => setShowVoucherPopup(true)}
                 disabled={!file || isLoading}
                 className={`px-6 py-2 rounded-md font-medium ${
                   !file || isLoading 
@@ -328,6 +356,12 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
                 Los gehts!
               </button>
             </div>
+
+            <VoucherPopup
+              isOpen={showVoucherPopup}
+              onClose={() => setShowVoucherPopup(false)}
+              onSuccess={handleVoucherSuccess}
+            />
 
             {error && (
               <div className="text-red-600 bg-red-50 p-3 rounded">{error}</div>
@@ -342,7 +376,8 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
 
         <div className="flex flex-col h-full">
           <div className="h-[250px] sm:h-[300px] lg:h-[calc(100%-2rem)] w-full relative z-20">
-            <MapComponent center={location} zoom={15} projLocation={analysisData?.analysis_result?.result_data?.[' Project location'] || 'Goethestraße 23, 36208 Wildeck'} />
+            <MapComponent center={(analysisData.latitue && analysisData.longitude) ? [analysisData.latitue, analysisData.longitude] : [50.9944, 9.9917]}
+              zoom={15} projLocation={analysisData?.analysis_result?.result_data?.[' Project location'] || 'Goethestraße 23, 36208 Wildeck'} />
           </div>
           <div className="mt-2 text-center text-sm text-gray-600">
             {analysisData?.analysis_result?.result_data?.[' Project location'] || 'Loading location...'}
@@ -355,28 +390,61 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
   const renderNonComplianceDetails = () => {
     const parseNonComplianceDetails = (details) => {
       if (!details) return [];
-  
-      const sections = details.split(/[.,]/)
-        .map(s => s.trim())
+    
+      // If details is an array, join it into a string.
+      if (Array.isArray(details)) {
+        details = details.join(", ");
+      }
+    
+      // Ensure details is a string.
+      if (typeof details !== "string") {
+        details = String(details);
+      }
+
+    
+      const sections = details
+        .split(/\s*\|\s*/)
+        .map((s) => s.trim())
         .filter(Boolean);
-  
-      const formattedContent = sections.map(section => {
-        if (section.endsWith(':')) {
+    
+      return sections.map((section) => {
+        if (section.endsWith(":")) {
           return {
-            type: 'heading',
-            content: section.slice(0, -1).trim()
+            type: "heading",
+            content: section.slice(0, -1).trim(),
           };
         }
         return {
-          type: 'bullet',
-          content: section
+          type: "bullet",
+          content: section,
         };
       });
-  
-      return formattedContent;
     };
+
+    const convertComplianceStatusToString = (complianceData) => {
+      let issues = [];
+      // Iterate over each key in the compliance object
+      Object.entries(complianceData).forEach(([key, value]) => {
+        // Skip the overall status field
+        if (key === "compliant_status") return;
+        if (value && value.issues && value.issues !== "no any") {
+          if (Array.isArray(value.issues)) {
+            issues.push(...value.issues);
+          } else {
+            issues.push(value.issues);
+          }
+        }
+      });
+      // Join all issues into one string separated by commas
+      return issues.join(" | ");
+    };
+    
+    // Usage example:
+    const detailsStr = convertComplianceStatusToString(analysisData?.compliance_status);
+
+    console.log(nonCompliantDetails ? "nonCompliantDetails" : "detailsStr")
   
-    const content = parseNonComplianceDetails(nonCompliantDetails ? nonCompliantDetails : analysisData?.non_compliant_details);
+    const content = parseNonComplianceDetails(nonCompliantDetails ? nonCompliantDetails : detailsStr);
   
     return (
       <div className="max-h-[50vh] sm:max-h-[60vh] lg:max-h-[45vh] py-2 overflow-y-auto custom-scrollbar bg-gray-50 rounded-lg p-4">
@@ -450,7 +518,8 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
 
         <div className="col-span-12 lg:col-span-5">
           <div className="h-[250px] sm:h-[300px] lg:h-[calc(100%-2rem)]  w-full relative rounded-lg overflow-hidden">
-            <MapComponent center={location} zoom={15} projLocation={analysisData?.analysis_result?.result_data?.[' Project location'] || 'Goethestraße 23, 36208 Wildeck'} />
+            <MapComponent center={(analysisData.latitue && analysisData.longitude) ? [analysisData.latitue, analysisData.longitude] : [50.9944, 9.9917]}
+              zoom={15} projLocation={analysisData?.analysis_result?.result_data?.[' Project location'] || 'Loading location...'} />
           </div>
           <div className="mt-2 text-center text-sm text-gray-600">
             {analysisData?.analysis_result?.result_data?.[' Project location'] || 'Loading location...'}
@@ -473,7 +542,7 @@ const BPlanModal = ({ isOpen, onClose, analysisData }) => {
           <X className="w-5 h-5" />
         </button>
 
-        {isLoading && <LoadingOverlay />}
+        {/* {isLoading && <LoadingOverlay />} */}
 
         <div className="flex-1 overflow-y-auto px-6 py-8">
           {view === "result" ? renderResultView() : renderInitialView()}

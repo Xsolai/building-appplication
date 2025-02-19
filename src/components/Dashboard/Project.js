@@ -116,7 +116,7 @@ const UnitCard = ({ analysisData, title, status, timestamp, locked = false, proj
         </div>
         <div className={`relative bg-white rounded-lg border ${locked ? 'opacity-60' : ''} hover:shadow-lg border-black transition-shadow h-full cursor-pointer`}>
           <div className="p-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
               <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
                 <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
               </div>
@@ -132,6 +132,7 @@ const UnitCard = ({ analysisData, title, status, timestamp, locked = false, proj
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           analysisData={analysisData}
+          currentProjectID={projectID}
         />
       )}
       
@@ -140,7 +141,7 @@ const UnitCard = ({ analysisData, title, status, timestamp, locked = false, proj
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           analysisData={analysisData}
-          projectName={projectTitle}
+          projectTitle={projectTitle}
           projectID={projectID}
         />
       )}
@@ -171,15 +172,16 @@ const ProjectPage = () => {
   const [hasStatusChanged, setHasStatusChanged] = useState(false);
   const [currentProjectTitle, setCurrentProjectTitle] = useState(null);
   const [currentProjectID, setCurrentProjectID] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
 
   // Add this effect to detect status changes
   useEffect(() => {
-    if (analysisData?.compliance_status && 
-        ['genehmigt', 'abgelehnt'].includes(analysisData.compliance_status)) {
+    if (analysisData?.compliance_status?.compliant_status && 
+        ['genehmigt', 'abgelehnt'].includes(analysisData.compliance_status.compliant_status)) {
       setHasStatusChanged(true);
     }
-  }, [analysisData?.compliance_status]);
+  }, [analysisData?.compliance_status?.compliant_status]);
     
   useEffect(() => {
     // Extract file_name from the pathname
@@ -249,6 +251,29 @@ const ProjectPage = () => {
     }
   }, [pathname]);
 
+  const sendAnalyzeRequest = async (currentProjectTitle, currentProjectID) => {
+    try {
+      setIsLoading(true); // Start loading
+      const response = await fetch(
+        `https://solasolution.ecomtask.de/buildingapp/analyze/?doc_id=${currentProjectID}&project_name=${currentProjectTitle}`,
+        {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          },
+        }
+      );
+      // console.log(response);
+      setAnalysisData(response.data);
+      window.location.reload(); // Refresh the page
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false); // Stop loading
+    }
+  };
+
   const getStatusColor = (status) => {
     const colors = {
       inBearbeitung: "bg-yellow-100 text-yellow-800",
@@ -304,8 +329,8 @@ const ProjectPage = () => {
       },
       {
         title: 'B-Plan',
-        status: getComplianceStatus(analysisData?.compliance_status, analysisData?.pending),
-        timestamp: getComplianceTimestamp(analysisData?.compliance_status, analysisData?.pending)
+        status: getComplianceStatus(analysisData?.compliance_status?.compliant_status, analysisData?.pending),
+        timestamp: getComplianceTimestamp(analysisData?.compliance_status?.compliant_status, analysisData?.pending)
       },
       {
         title: 'Brandschutz',
@@ -331,7 +356,7 @@ const ProjectPage = () => {
             timestamp={unit.timestamp}
             locked={unit.locked}
             analysisData={analysisData}
-            projectName={currentProjectTitle}
+            projectTitle={currentProjectTitle}
             projectID={currentProjectID}
           />
         ))}
@@ -400,6 +425,22 @@ const ProjectPage = () => {
                   Feedback geben
                 </button>
               )}
+              {(!analysisData || Object.keys(analysisData).length < 3) && (<button
+                  onClick={() => sendAnalyzeRequest(currentProjectTitle, currentProjectID)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center space-x-2">
+                      <svg className="inline animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+                        <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" className="opacity-75" />
+                      </svg>
+                      <span>Analysieren...</span>
+                    </div>
+                  ) : (
+                    "Analysieren"
+                  )}
+                </button>)}
             </div>
           </div>
         </div>

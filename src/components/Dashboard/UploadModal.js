@@ -4,7 +4,7 @@ import { CheckCircle2, X, XCircle, Clock } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import dynamic from 'next/dynamic';
 import Doc from "@/assests/images/docs.png";
-import axios from 'axios';
+import VoucherPopup from './Voucher';
 
 // Skeleton component for the map
 const MapSkeleton = () => (
@@ -85,6 +85,33 @@ const VollstandigkeitForm = ({ isOpen, onClose, analysisData, projectTitle, proj
   const [location, setLocation] = useState([50.9944, 9.9917]);
   const [isLoading, setIsLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState(null);
+  const [showVoucherPopup, setShowVoucherPopup] = useState(false);
+  const [isVoucherVerified, setIsVoucherVerified] = useState(false);
+
+  const fetchCompletenessCheck = async () => {
+    try {
+      const response = await fetch(`https://solasolution.ecomtask.de/buildingapp/completeness-check/${projectID}`, {
+        method: 'GET',
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+      });
+      const data = await response.json();
+      if (data.detail) return;
+      setApiResponse(data);
+    } catch (error) {
+      console.error("Error fetching completeness check:", error);
+    }
+  }
+  
+  // useEffect(() => {
+  //   if (isOpen) console.log(apiResponse);
+  // }, [isOpen, apiResponse])
+
+  useEffect(() => {
+    if (isOpen) fetchCompletenessCheck();
+  }, [isOpen])
 
   useEffect(() => {
     const fetchCoordinates = async () => {
@@ -117,25 +144,31 @@ const VollstandigkeitForm = ({ isOpen, onClose, analysisData, projectTitle, proj
     };
   };
 
+  const handleVoucherSuccess = () => {
+    setIsVoucherVerified(true);
+    handleAnalysis(); // Proceed with action after voucher verification
+  };
+
   const handleAnalysis = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.post(
-        'https://solasolution.ecomtask.de/buildingapp/api/analyze/',
+      const response = await fetch(
+        `https://solasolution.ecomtask.de/buildingapp/completeness-check/?doc_id=${projectID}&project_name=${projectTitle}`,
         {
-          doc_id: projectID,
-          project_name: projectTitle
-        },
-        {
+          method: 'POST',
           headers: {
             'accept': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
           },
         }
       );
-      setApiResponse(response.data);
+
+      const data = await response.json();
+      if (data.detail) return;
+      setApiResponse(data);
     } catch (error) {
       console.error(error);
+      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }
@@ -163,38 +196,17 @@ const VollstandigkeitForm = ({ isOpen, onClose, analysisData, projectTitle, proj
                       <h2 className="text-xl md:text-2xl lg:text-3xl font-extrabold mb-4">Vollständigkeitsprüfung</h2>
   
                       {/* If the API response exists, display it */}
-                      {apiResponse ? (
-                        <div className="grid grid-cols-1 gap-4 pb-4">
-                          {Object.entries(apiResponse["Project Analysis Result"]).map(([key, value]) => (
-                            <div key={key} className="bg-white p-2">
-                              <div className="text-gray-700 font-bold mb-1">{key}</div>
-                              <div className="text-gray-900">{value}</div>
-                            </div>
-                          ))}
-                          <div className="mt-4">
-                            <h3 className="text-lg font-bold">Location Co-ordinates</h3>
-                            <div className="bg-white p-2">
-                              <div className="text-gray-700 font-bold">Latitude:</div>
-                              <div className="text-gray-900">{apiResponse["Location Co-ordinates"].Latitude}</div>
-                              <div className="text-gray-700 font-bold">Longitude:</div>
-                              <div className="text-gray-900">{apiResponse["Location Co-ordinates"].Longitude}</div>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        // Optionally, display any previously available analysisData
-                        analysisData && analysisData.analysis_result && analysisData.analysis_result.result_data && (
-                          <div className="grid grid-cols-1 gap-4 pb-4">
-                            {Object.entries(analysisData.analysis_result.result_data).map(([key, value]) => (
+                      <div className="grid grid-cols-1 gap-4 pb-4">
+                        {apiResponse ? (
+                            Object.entries(apiResponse.required_documents).map(([key, doc]) => (
                               <div key={key} className="bg-white p-2">
                                 <div className="text-gray-700 font-bold mb-1">{key}</div>
-                                <div className="text-gray-900">{value}</div>
+                                <div className="text-gray-900">Status: {doc.status}</div>
+                                <div className="text-gray-900">Action: {doc.action_needed}</div>
                               </div>
-                              ))
-                            }
-                          </div>
-                        )
-                      )}
+                            ))
+                        ) : null}
+                      </div>
                     </div>
   
                     {/* Status Card */}
@@ -218,41 +230,45 @@ const VollstandigkeitForm = ({ isOpen, onClose, analysisData, projectTitle, proj
                         </div>
                       </div>
                     </div>
-  
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex flex-col sm:flex-row gap-6">
-                      <div className="flex-1">
-                        {isLoading ? (
-                          <LoadingOverlay />
-                        ) : (
-                          // Hide the button if an API response is present
-                          !apiResponse && (
-                            <button
-                              onClick={handleAnalysis}
-                              className="px-6 py-2 rounded-md font-medium bg-blue-600 text-white hover:bg-blue-700"
-                            >
-                              Los gehts!
-                            </button>
-                          )
-                        )}
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
-  
+
+              {/* Map */}
               <div className="col-span-12 lg:col-span-5">
-                <div className="h-[250px] sm:h-[300px] lg:h-[calc(100%-2rem)] w-full relative rounded-lg overflow-hidden">
-                  <MapComponent center={location} zoom={15} projectLocation={analysisData?.analysis_result?.result_data?.[' Project location'] || 'Goethestraße 23, 36208 Wildeck'} />
+                <div className="sm:min-h-[250px] max-h-[400px] h-[250px] sm:h-[300px] lg:h-[calc(100%-2rem)] w-full relative rounded-lg overflow-hidden">
+                  <MapComponent center={(analysisData.latitue && analysisData.longitude) ? [analysisData.latitue, analysisData.longitude] : [50.9944, 9.9917]} 
+                    zoom={15} projectLocation={analysisData?.analysis_result?.result_data?.[' Project location'] || 
+                    'Loading location...'} />
                 </div>
                 <div className="mt-2 text-center text-sm text-gray-600">
-                  {analysisData?.analysis_result?.result_data?.[' Project location'] || 'Goethestraße 23, 36208 Wildeck'}
+                  {analysisData?.analysis_result?.result_data?.[' Project location'] || 'Loading location...'}
                 </div>
               </div>
             </div>
+            
           </div>
         </div>
+        <div className="absolute bottom-8 right-8">
+          {isLoading ? (
+            <LoadingOverlay />
+          ) : (
+            // Hide the button if an API response is present
+            !apiResponse && (
+              <button
+                onClick={() => setShowVoucherPopup(true)}
+                className="ml-auto px-6 py-2 rounded-md font-medium bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Los gehts!
+              </button>
+            )
+          )}
+        </div>
+        <VoucherPopup
+          isOpen={showVoucherPopup}
+          onClose={() => setShowVoucherPopup(false)}
+          onSuccess={handleVoucherSuccess}
+        />
       </div>
   
       <style jsx>{`
