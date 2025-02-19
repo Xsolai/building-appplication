@@ -23,7 +23,7 @@ const AppBar = () => {
       const token = localStorage.getItem('access_token');
 
       try {
-        const response = await fetch("https://solasolution.ecomtask.de/buildingapp/update-profile", {
+        const response = await fetch("https://solasolution.ecomtask.de/building-app/update-profile", {
           method: "GET",
           headers: {
             'Content-Type': 'application/json',

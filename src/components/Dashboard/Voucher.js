@@ -14,7 +14,7 @@ const VoucherPopup = ({ isOpen, onClose, onSuccess }) => {
 
     try {
       // First check if voucher is valid
-      const checkResponse = await fetch(`https://solasolution.ecomtask.de/buildingapp/voucher/check?code=${encodeURIComponent(voucherCode)}`, {
+      const checkResponse = await fetch(`https://solasolution.ecomtask.de/building-app/voucher/check?code=${encodeURIComponent(voucherCode)}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`,
@@ -28,7 +28,7 @@ const VoucherPopup = ({ isOpen, onClose, onSuccess }) => {
       }
 
       // If valid, mark it as used
-      const markResponse = await fetch(`https://solasolution.ecomtask.de/buildingapp/voucher/mark-used?code=${encodeURIComponent(voucherCode)}`, {
+      const markResponse = await fetch(`https://solasolution.ecomtask.de/building-app/voucher/mark-used?code=${encodeURIComponent(voucherCode)}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`,

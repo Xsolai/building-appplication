@@ -210,7 +210,7 @@ export default function Dashboard() {
           throw new Error('Not authenticated!');
         }
 
-        const response = await fetch('https://solasolution.ecomtask.de/buildingapp/projects/', {
+        const response = await fetch('https://solasolution.ecomtask.de/building-app/projects/', {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'

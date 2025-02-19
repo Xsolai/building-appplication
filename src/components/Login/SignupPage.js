@@ -77,7 +77,7 @@ const SignupPage = () => {
       
       try {
         // Update the API endpoint to match your FastAPI server
-        const response = await fetch('https://solasolution.ecomtask.de/buildingapp/auth/register', {  // Adjust the URL to match your backend
+        const response = await fetch('https://solasolution.ecomtask.de/building-app/auth/register', {  // Adjust the URL to match your backend
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
