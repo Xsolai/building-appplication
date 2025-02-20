@@ -1,4 +1,4 @@
-import SignupPage from "@/components/Login/SignupPage";
+import SignupPage from "@/components/loginSignupPage";
 export default function Login() {
   return (
     <div>

@@ -47,7 +47,7 @@ const LoginPage = () => {
         formData.append('username', loginData.username);
         formData.append('password', loginData.password);
 
-        const response = await fetch('https://solasolution.ecomtask.de/buildingapp/login/', {
+        const response = await fetch('https://solasolution.ecomtask.de/buildingapp/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
