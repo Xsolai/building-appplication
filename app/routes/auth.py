@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from jose import JWTError
 
 router = APIRouter(
-    prefix="/auth",
+    # prefix="/auth",
     tags=["Auth"]
 )
 
