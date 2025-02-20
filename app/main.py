@@ -26,11 +26,13 @@ async def limit_payload_size(request, call_next):
 
 
 # Database and routes setup
+
 models.Base.metadata.create_all(bind=engine)
+app.include_router(auth.router)
 app.include_router(voucher.router)
 app.include_router(upload.router)
 app.include_router(login.router)
-app.include_router(auth.router)
+
 app.include_router(result.router)
 app.include_router(upload_B_plan.router)
 app.include_router(feedback_router.router)
