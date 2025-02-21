@@ -5,7 +5,6 @@ import { PenSquare, AlertCircle, Save, X } from 'lucide-react';
 import Sidebar from "@/components/common/SideBar";
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast'; // Import Toaster
-import VoucherPopup from './Voucher';
 import UploadProgress from '../common/UploadProgress';
 import DragDropUpload from './DragDropUpload';
 
@@ -36,13 +35,6 @@ const Form = () => {
   const [loading, setLoading] = useState(false);
   const [isProcessed, setIsProcessed] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [showVoucherPopup, setShowVoucherPopup] = useState(false);
-  const [isVoucherVerified, setIsVoucherVerified] = useState(false);
-
-  const handleVoucherSuccess = () => {
-    setIsVoucherVerified(true);
-    uploadFile(); // Proceed with file upload after voucher verification
-  };
 
     // Update the existing button click handler
     const handleLetsGoClick = () => {
@@ -50,7 +42,7 @@ const Form = () => {
         toast.error('Bitte Projektnamen und Datei auswählen');
         return;
       }
-      setShowVoucherPopup(true);
+      uploadFile();
     };
 
   const [formData, setFormData] = useState({
@@ -138,7 +130,7 @@ const Form = () => {
   const handleSaveChanges = async () => {
     setLoading(true);
     try {
-      const response = await fetch('https://solasolution.ecomtask.de/buildingapp/api/update-project/', {
+      const response = await fetch(`https://solasolution.ecomtask.de/buildingapp/update-project-details/${formData?.["Project ID"]}`, {
         method: 'PUT',
         ...getConfig(),
         body: JSON.stringify(formData)
@@ -252,13 +244,6 @@ const Form = () => {
                   <UploadProgress isUploading={loading} file={file} />
                 </div>
               )} */}
-
-              {/* Add the VoucherPopup component */}
-              <VoucherPopup
-                isOpen={showVoucherPopup}
-                onClose={() => setShowVoucherPopup(false)}
-                onSuccess={handleVoucherSuccess}
-              />
             </div>
           </div>
 

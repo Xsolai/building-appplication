@@ -262,6 +262,7 @@ const ProjectPage = () => {
             'accept': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
           },
+          // signal: AbortSignal.timeout(600000),
         }
       );
       // console.log(response);
