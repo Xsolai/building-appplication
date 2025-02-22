@@ -173,6 +173,7 @@ const ProjectPage = () => {
   const [currentProjectTitle, setCurrentProjectTitle] = useState(null);
   const [currentProjectID, setCurrentProjectID] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoading2, setIsLoading2] = useState(false);
 
 
   // Add this effect to detect status changes
@@ -262,7 +263,6 @@ const ProjectPage = () => {
             'accept': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
           },
-          // signal: AbortSignal.timeout(600000),
         }
       );
       // console.log(response);
@@ -418,30 +418,54 @@ const ProjectPage = () => {
                 </div>
               </div>
 
-              {hasStatusChanged && (
+              <div>
+                {hasStatusChanged && (
+                  <button
+                    onClick={() => setShowFeedbackModal(true)}
+                    className="mx-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                    Feedback geben
+                  </button>
+                )}
+
+                {(!analysisData || Object.keys(analysisData).length < 3) && (<button
+                    onClick={() => sendAnalyzeRequest(currentProjectTitle, currentProjectID)}
+                    className="mx-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center space-x-2">
+                        <svg className="inline animate-spin h-5 w-5" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+                          <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" className="opacity-75" />
+                        </svg>
+                        <span>Analysieren...</span>
+                      </div>
+                    ) : (
+                      "Analysieren"
+                    )}
+                  </button>)}
+                
                 <button
-                  onClick={() => setShowFeedbackModal(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Feedback geben
-                </button>
-              )}
-              {(!analysisData || Object.keys(analysisData).length < 3) && (<button
                   onClick={() => sendAnalyzeRequest(currentProjectTitle, currentProjectID)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  className="mx-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors
+                    disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  disabled={true} //enable when needed
                 >
-                  {isLoading ? (
+                  {isLoading2 ? (
                     <div className="flex items-center space-x-2">
                       <svg className="inline animate-spin h-5 w-5" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
                         <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" className="opacity-75" />
                       </svg>
-                      <span>Analysieren...</span>
+                      <span>
+                        Überprüfung...
+                      </span>
                     </div>
                   ) : (
-                    "Analysieren"
+                    "Überprüfen Sie alles"
                   )}
-                </button>)}
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -441,8 +441,6 @@ const BPlanModal = ({ isOpen, onClose, analysisData, currentProjectID }) => {
     
     // Usage example:
     const detailsStr = convertComplianceStatusToString(analysisData?.compliance_status);
-
-    console.log(nonCompliantDetails ? "nonCompliantDetails" : "detailsStr")
   
     const content = parseNonComplianceDetails(nonCompliantDetails ? nonCompliantDetails : detailsStr);
   
@@ -518,7 +516,7 @@ const BPlanModal = ({ isOpen, onClose, analysisData, currentProjectID }) => {
 
         <div className="col-span-12 lg:col-span-5">
           <div className="h-[250px] sm:h-[300px] lg:h-[calc(100%-2rem)]  w-full relative rounded-lg overflow-hidden">
-            <MapComponent center={(analysisData.latitue && analysisData.longitude) ? [analysisData.latitue, analysisData.longitude] : [50.9944, 9.9917]}
+            <MapComponent center={(analysisData.latitude && analysisData.longitude) ? [analysisData.latitude, analysisData.longitude] : [50.9944, 9.9917]}
               zoom={15} projLocation={analysisData?.analysis_result?.result_data?.[' Project location'] || 'Loading location...'} />
           </div>
           <div className="mt-2 text-center text-sm text-gray-600">

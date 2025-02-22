@@ -97,8 +97,10 @@ const Form = () => {
   
       const response = await fetch('https://solasolution.ecomtask.de/buildingapp/upload/', {
         method: 'POST',
+        mode: 'no-cors',
         ...getFormDataConfig(),
         body: formDataToSend,
+        signal: AbortSignal.timeout(900000),
       });
   
       const data = await response.json();

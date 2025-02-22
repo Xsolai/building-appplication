@@ -237,7 +237,7 @@ const VollstandigkeitForm = ({ isOpen, onClose, analysisData, projectTitle, proj
               {/* Map */}
               <div className="col-span-12 lg:col-span-5">
                 <div className="sm:min-h-[250px] max-h-[400px] h-[250px] sm:h-[300px] lg:h-[calc(100%-2rem)] w-full relative rounded-lg overflow-hidden">
-                  <MapComponent center={(analysisData.latitue && analysisData.longitude) ? [analysisData.latitue, analysisData.longitude] : [50.9944, 9.9917]} 
+                  <MapComponent center={(analysisData.latitude && analysisData.longitude) ? [analysisData.latitude, analysisData.longitude] : [50.9944, 9.9917]} 
                     zoom={15} projectLocation={analysisData?.analysis_result?.result_data?.[' Project location'] || 
                     'Loading location...'} />
                 </div>
